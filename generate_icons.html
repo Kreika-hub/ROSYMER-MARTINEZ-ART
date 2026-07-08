@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Generador de Iconos PWA</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; padding: 50px; background: #EEFBF8; color: #0b2e2b; }
+    .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(11,46,43,0.08); display: inline-block; max-width: 500px; border: 1px solid rgba(20,60,55,0.06); }
+    h1 { color: #0b2e2b; margin-top: 0; font-size: 24px; font-weight: 800; }
+    p { font-size: 13.5px; color: #6c8985; line-height: 1.5; }
+    .btn { background: linear-gradient(135deg, #14c2a9 0%, #0b9c87 100%); color: white; border: none; padding: 14px 28px; border-radius: 12px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 20px; box-shadow: 0 4px 14px rgba(20,194,169,0.25); transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.95; }
+    .btn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+    canvas { border: 1px solid #ddd; margin: 10px; background: white; display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Generador de Iconos PWA</h1>
+    <p>Este asistente tomará la imagen <strong>Logo Rosy.png</strong>, la centrará sobre un fondo blanco y creará automáticamente los archivos <strong>icon-192.png</strong> y <strong>icon-512.png</strong> requeridos para la instalación en dispositivos móviles.</p>
+    <img id="source" src="Logo Rosy.png" style="max-width: 150px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee;" onerror="showError()">
+    <br>
+    <button class="btn" id="btn-gen" onclick="generate()" disabled>Generar y Descargar Iconos</button>
+    <div id="status" style="margin-top: 15px; font-weight: bold; color: #6c8985; font-size: 13px;">Cargando logotipo...</div>
+  </div>
+
+  <canvas id="c192" width="192" height="192"></canvas>
+  <canvas id="c512" width="512" height="512"></canvas>
+
+  <script>
+    const imgEl = document.getElementById('source');
+    imgEl.onload = () => {
+      document.getElementById('btn-gen').removeAttribute('disabled');
+      document.getElementById('status').textContent = 'Logotipo cargado. ¡Haz clic para generar!';
+    };
+
+    function showError() {
+      document.getElementById('status').innerHTML = '<span style="color:#e0574f;">Error: No se encontró "Logo Rosy.png" en este directorio. Asegúrate de que el nombre sea exacto.</span>';
+    }
+
+    function downloadCanvas(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function generate() {
+      // 192x192
+      drawCentered(document.getElementById('c192'), 192);
+      downloadCanvas('c192', 'icon-192.png');
+
+      // 512x512
+      drawCentered(document.getElementById('c512'), 512);
+      downloadCanvas('c512', 'icon-512.png');
+
+      document.getElementById('status').innerHTML = '<span style="color:#0b9c87;">¡Descargados con éxito! Mueve los archivos "icon-192.png" e "icon-512.png" desde la carpeta de Descargas a este directorio.</span>';
+    }
+
+    function drawCentered(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      // Fondo blanco
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+
+      const img = document.getElementById('source');
+      let w = img.naturalWidth || img.width;
+      let h = img.naturalHeight || img.height;
+
+      // Escalar al 70% del tamaño del Canvas
+      const maxDim = size * 0.70;
+      if (w > h) {
+        h = (h * maxDim) / w;
+        w = maxDim;
+      } else {
+        w = (w * maxDim) / h;
+        h = maxDim;
+      }
+
+      const x = (size - w) / 2;
+      const y = (size - h) / 2;
+
+      ctx.drawImage(img, x, y, w, h);
+    }
+  </script>
+</body>
+</html>

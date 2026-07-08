@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Certificados de Autenticidad</title>
+<!-- PWA & iOS Optimization -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CertificadosRM">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- CDNs para Herramientas y Estética Premium -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg-1: #F7FBFA;
+    --bg-2: #EEFBF8;
+    --white: #FFFFFF;
+    --glass: rgba(255,255,255,0.72);
+    --glass-brd: rgba(255,255,255,0.9);
+    --aqua: #14C2A9;
+    --aqua-deep: #0B9C87;
+    --aqua-pale: #D6F7F1;
+    --ink: #0B2E2B;
+    --text-dim: #6C8985;
+    --shadow: rgba(20,60,55,0.08);
+    --shadow-strong: rgba(20,60,55,0.14);
+    --danger: #E0574F;
+    --gold: #b8975a;
+    --gold-light: #fbf9f4;
+    --gold-gradient: linear-gradient(135deg, #d4af37 0%, #b8975a 50%, #aa7c11 100%);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; min-height:100vh;
+    font-family:'Montserrat', sans-serif;
+    color:var(--ink);
+    background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 55%, #FFFFFF 100%);
+    padding-bottom:60px;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 20px; }
+
+  .navbar{
+    position:sticky; top:0; z-index:20;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background:rgba(255,255,255,0.7);
+    border-bottom:1px solid rgba(20,60,55,0.06);
+    padding:16px 20px;
+  }
+  .navbar-inner{ max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  .navbar h1{ font-size:19px; font-weight:800; margin:0; letter-spacing:-0.01em; }
+  .navbar .sub{ font-size:12px; color:var(--text-dim); font-weight:500; margin-top:1px;}
+
+  .segmented{ display:flex; background:rgba(20,60,55,0.06); border-radius:12px; padding:3px; gap:3px; }
+  .segmented button{
+    border:none; background:transparent; padding:8px 16px; border-radius:9px;
+    font-family:'Montserrat'; font-weight:600; font-size:13px; color:var(--text-dim);
+    cursor:pointer; transition:all .2s ease;
+  }
+  .segmented button.active{ background:var(--white); color:var(--ink); box-shadow:0 2px 8px var(--shadow); }
+
+  main{ padding-top:26px; }
+  header.hero{ margin-bottom:22px; }
+  header.hero .eyebrow{ font-size:11.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--aqua-deep); font-weight:700; }
+  header.hero h2{ font-family:'Montserrat'; font-weight:800; font-size:28px; margin:6px 0 4px; letter-spacing:-0.01em; }
+  header.hero p{ margin:0; color:var(--text-dim); font-size:13.5px; max-width:560px; line-height:1.5; font-weight:500;}
+
+  .grid{ display:grid; grid-template-columns: minmax(320px, 440px) 1fr; gap:24px; align-items:start; }
+  @media (max-width: 990px){ .grid{ grid-template-columns:1fr; } }
+
+  .panel{
+    background:var(--glass); border:1px solid var(--glass-brd); border-radius:22px;
+    backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
+    box-shadow: 0 10px 34px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.9); padding:24px;
+  }
+  .panel h3{ font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--aqua-deep); margin:0 0 16px; font-weight:700; }
+  label{ display:block; font-size:12px; color:var(--text-dim); margin:14px 0 6px; font-weight:600; }
+  label.first{ margin-top:0; }
+  input{
+    width:100%; padding:12px 14px; border-radius:13px; border:1px solid rgba(20,60,55,0.10);
+    background:rgba(255,255,255,0.85); color:var(--ink); font-family:'Montserrat'; font-weight:500; font-size:14px;
+    outline:none; transition:border-color .15s, box-shadow .15s;
+  }
+  input::placeholder{ color:rgba(11,46,43,0.32); }
+  input:focus{ border-color:var(--aqua); box-shadow:0 0 0 4px rgba(20,194,169,0.14); }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  /* Cargador de Fotos de la Obra */
+  .photo-uploader-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .photo-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .photo-preview-box {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: 1px dashed rgba(20,60,55,0.2);
+    background: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .photo-preview-box .placeholder-text {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .photo-preview-box .placeholder-text i {
+    font-size: 18px;
+    margin-bottom: 4px;
+    opacity: 0.6;
+    color: var(--aqua-deep);
+  }
+  .photo-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .photo-actions {
+    display: flex;
+    gap: 2px;
+    justify-content: space-between;
+  }
+  .action-btn {
+    flex: 1;
+    border: 1px solid rgba(20,60,55,0.1);
+    background: var(--white);
+    border-radius: 6px;
+    padding: 5px 0;
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--ink);
+    transition: all 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .action-btn:hover:not(:disabled) {
+    background: var(--aqua-pale);
+    color: var(--aqua-deep);
+    border-color: rgba(20,194,169,0.3);
+  }
+  .action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .action-btn.delete-btn:hover:not(:disabled) {
+    background: #fde8e7;
+    color: var(--danger);
+    border-color: rgba(224,87,79,0.3);
+  }
+
+  /* Cargador de Logo */
+  .logo-uploader-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.4);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(20,60,55,0.06);
+  }
+  .logo-preview-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px dashed rgba(20,60,55,0.2);
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .logo-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .logo-preview-box .placeholder-text {
+    font-size: 8px;
+    color: var(--text-dim);
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .logo-actions {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+  .logo-actions button {
+    flex: 1;
+    font-size: 11px;
+    padding: 8px;
+  }
+
+  .cert-code-box{
+    margin-top:18px; padding:13px 15px; border-radius:14px; background:var(--aqua-pale);
+    border:1px solid rgba(20,194,169,0.25); display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .cert-code-box span.lbl{ font-size:10.5px; color:var(--aqua-deep); letter-spacing:0.08em; text-transform:uppercase; font-weight:700;}
+  .cert-code-box span.code{ font-weight:700; letter-spacing:0.03em; color:var(--ink); font-size:13.5px;}
+  .cert-code-box button{
+    background:var(--white); border:1px solid rgba(20,194,169,0.3); color:var(--aqua-deep);
+    border-radius:9px; padding:6px 10px; font-size:11.5px; font-weight:700; cursor:pointer; transition:background .15s;
+  }
+  .cert-code-box button:hover{ background:var(--aqua-pale); }
+
+  .btn{
+    border:none; border-radius:14px; font-family:'Montserrat'; font-weight:700; font-size:14px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .12s, box-shadow .12s; padding:14px 16px; width:100%;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{
+    margin-top:20px; background:linear-gradient(135deg, var(--aqua) 0%, var(--aqua-deep) 100%);
+    color:#fff; box-shadow:0 8px 22px rgba(20,194,169,0.30);
+  }
+  .btn-secondary{ margin-top:10px; background:var(--white); color:var(--ink); border:1px solid rgba(20,60,55,0.12); }
+  .note{ font-size:11.5px; color:var(--text-dim); margin-top:10px; line-height:1.5; text-align:center; font-weight:500;}
+
+  /* --- SECCIÓN PREVIALIZACIÓN VERTICAL (5x7 in) --- */
+  .preview-col{ display:flex; flex-direction:column; align-items:center; width: 100%; }
+  .preview-shell{ width:100%; max-width:400px; aspect-ratio:5/7; position:relative; }
+  .cert-card{
+    position:absolute; inset:0; background:linear-gradient(165deg, #FFFFFF 0%, var(--gold-light) 120%);
+    border:1px solid rgba(255,255,255,1); border-radius:20px;
+    box-shadow:0 24px 60px var(--shadow-strong), inset 0 1px 0 rgba(255,255,255,1);
+    padding:20px; display:flex; flex-direction:column; gap:14px; overflow:hidden;
+  }
+  .cert-card::before{ content:''; position:absolute; inset:10px; border:2px double var(--gold); border-radius:11px; pointer-events:none; z-index: 5;}
+  
+  /* Lado Superior - Galería/Carrusel interactivo */
+  .cert-image-container {
+    width: 100%;
+    height: 42%;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(11,46,43,0.08);
+    background: rgba(20, 60, 55, 0.04);
+    z-index: 2;
+  }
+  .cert-image-container .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    padding: 10px;
+  }
+  .cert-image-container .image-placeholder i {
+    font-size: 28px;
+    margin-bottom: 6px;
+    opacity: 0.5;
+    color: var(--aqua-deep);
+  }
+  .carousel-item {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    display: none;
+  }
+  .carousel-item.active {
+    display: block;
+  }
+  
+  /* Botones del Carrusel flotantes */
+  .carousel-ctrl {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--ink);
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    z-index: 10;
+    transition: all 0.2s ease;
+  }
+  .carousel-ctrl:hover {
+    background: var(--white);
+    color: var(--aqua-deep);
+  }
+  .carousel-ctrl.prev { left: 8px; }
+  .carousel-ctrl.next { right: 8px; }
+  
+  .carousel-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+  }
+  .carousel-indicator span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+  }
+  .carousel-indicator span.active {
+    background: var(--white);
+  }
+
+  /* Lado Derecho - Metadatos */
+  .cert-content-container {
+    width: 100%;
+    height: 52%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+    z-index: 2;
+  }
+  .cert-eyebrow{ font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); font-weight:700; margin-top:4px;}
+  .cert-heading{ font-size:14px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink); font-weight:800; margin:2px 0 0;}
+  .cert-title{ font-weight:800; font-size:18px; line-height:1.2; margin:8px 0 2px; color:var(--ink); word-break:break-word;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+  .cert-epigraph{ font-style:italic; font-weight:500; font-size:11px; color:var(--gold); margin:0 0 6px; line-height:1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+  .cert-divider{ width:45px; height:2.5px; background:var(--gold-gradient); border-radius:2px; opacity:0.9; margin:2px auto 8px;}
+  
+  .cert-details{ width:100%; display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; font-size:11px; margin-bottom:auto;}
+  .cert-details .item{ text-align:left; }
+  .cert-details .item .k{ display:block; color:var(--text-dim); font-size:8px; letter-spacing:0.08em; text-transform:uppercase; font-weight:700;}
+  .cert-details .item .v{ color:var(--ink); font-weight:700; font-size:11px; margin-top:1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+  
+  .cert-footer{ width:100%; margin-top:8px; padding-top:8px; border-top:1px solid rgba(184,151,90,0.22); display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .cert-qr {
+    width: 36px;
+    height: 36px;
+    background: var(--white);
+    padding: 2px;
+    border-radius: 4px;
+    border: 1px solid rgba(20,60,55,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .cert-qr img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .seal{
+    width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:10px; color:#fff;
+    box-shadow:0 0 0 3px rgba(184,151,90,0.18), 0 4px 10px var(--shadow-strong); flex-shrink:0;
+    overflow:hidden;
+  }
+  .seal-init {
+    background:radial-gradient(circle at 35% 30%, #ffffff, var(--gold) 55%, #aa7c11 100%);
+  }
+  .seal-logo {
+    background:var(--white);
+  }
+  .seal-logo img {
+    width: 100%; height: 100%; object-fit: contain;
+  }
+
+  .cert-meta{ text-align:right; }
+  .cert-meta .code{ font-size:10.5px; letter-spacing:0.04em; color:var(--gold); font-weight:700;}
+  .cert-meta .place{ font-size:8.5px; color:var(--text-dim); margin-top:1px; font-weight:500;}
+  .size-hint{ margin-top:14px; font-size:11.5px; color:var(--text-dim); text-align:center; font-weight:500;}
+
+  /* Galería */
+  .gallery-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:16px; }
+  .gallery-card{
+    background:var(--glass); border:1px solid var(--glass-brd); border-radius:18px;
+    box-shadow:0 8px 24px var(--shadow); padding:16px; cursor:pointer;
+    transition:transform .15s, box-shadow .15s; position:relative;
+  }
+  .gallery-card:hover{ transform:translateY(-3px); box-shadow:0 12px 30px var(--shadow-strong); }
+  .gallery-card .mini-bar{ width:28px; height:3px; background:var(--aqua); border-radius:3px; margin-bottom:10px;}
+  .gallery-card .g-title{ font-weight:800; font-size:14.5px; line-height:1.25; margin-bottom:4px; }
+  .gallery-card .g-artist{ font-size:11.5px; color:var(--text-dim); font-weight:600; margin-bottom:10px; }
+  .gallery-card .g-code{ font-size:10px; color:var(--aqua-deep); font-weight:700; letter-spacing:0.03em; }
+  .gallery-card .g-actions{ margin-top:12px; display:flex; gap:6px; }
+  .gallery-card .g-actions button{
+    flex:1; font-family:'Montserrat'; font-weight:700; font-size:11px; border-radius:9px; padding:7px 0;
+    border:1px solid rgba(20,60,55,0.12); background:var(--white); color:var(--ink); cursor:pointer;
+  }
+  .gallery-card .g-actions button.del{ color:var(--danger); border-color:rgba(224,87,79,0.3); }
+  .gallery-empty{ text-align:center; padding:60px 20px; color:var(--text-dim); font-weight:600; font-size:14px; }
+  .gallery-empty .icon{ font-size:36px; margin-bottom:10px; opacity:0.6; }
+  #view-gallery{ display:none; }
+
+  /* --- PWA FLOATING INSTALL PROMPT --- */
+  .pwa-prompt {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 380px;
+    background: var(--white);
+    border: 1px solid rgba(184,151,90,0.32);
+    border-radius: 20px;
+    box-shadow: 0 16px 40px rgba(11,46,43,0.16);
+    padding: 16px;
+    z-index: 9999;
+    animation: slideUpPwa 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes slideUpPwa {
+    from { transform: translate(-50%, 100px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+  .pwa-btn-install {
+    background: linear-gradient(135deg, var(--aqua) 0%, var(--aqua-deep) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12.5px;
+    width: 100%;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(20,194,169,0.25);
+    transition: opacity 0.15s;
+  }
+  .pwa-btn-install:hover { opacity: 0.95; }
+  .ios-instruction-box {
+    background: rgba(20,60,55,0.03);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .ios-instruction-box ol { margin: 6px 0 0; padding-left: 18px; }
+  .ios-instruction-box li { margin-bottom: 4px; }
+
+  /* Modales */
+  .modal {
+    position: fixed;
+    z-index: 100;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(11, 46, 43, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-content {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(11, 46, 43, 0.2);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(20,60,55,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h4 { margin: 0; font-size: 16px; font-weight: 800; color: var(--ink); }
+  .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-dim); line-height: 1;}
+  .modal-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8faf9;
+    min-height: 250px;
+  }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(20,60,55,0.08);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cropper-container {
+    max-width: 100%;
+    max-height: 50vh;
+    overflow: hidden;
+  }
+  .cropper-container img {
+    max-width: 100%;
+    display: block;
+  }
+  .camera-stream-container {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .camera-stream-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="navbar-inner">
+    <div>
+      <h1>Certificados</h1>
+      <div class="sub">Kreika · Autenticidad de obras</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="segmented">
+        <button class="active" data-view="nuevo">Nuevo</button>
+        <button data-view="gallery">Galería</button>
+      </div>
+      <button id="btn-settings" type="button" style="background:transparent; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color .12s;" title="Configuración de Supabase"><i class="fa-solid fa-gear"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <main>
+
+    <div id="view-nuevo">
+      <header class="hero">
+        <div class="eyebrow">Nuevo certificado</div>
+        <h2>Datos de la obra</h2>
+        <p>Completa los campos y descarga el certificado en PDF (7 × 5 in horizontal), o guárdalo en tu galería local.</p>
+      </header>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Información</h3>
+
+          <label class="first">Título de la obra</label>
+          <input id="f-titulo" type="text" placeholder="Ej. Karichuana: Mujer del Viento" value="Karichuana: Mujer del Viento">
+
+          <label>Epígrafe / subtítulo poético</label>
+          <input id="f-epigrafe" type="text" placeholder="Ej. La Mirada que Abrió el Espacio" value="La Mirada que Abrió el Espacio">
+
+          <label>Artista</label>
+          <input id="f-artista" type="text" placeholder="Nombre del artista" value="Rosymer Martínez Salazar">
+
+          <div class="row2">
+            <div>
+              <label>Año</label>
+              <input id="f-anio" type="text" placeholder="2026" value="2026">
+            </div>
+            <div>
+              <label>Técnica</label>
+              <input id="f-tecnica" type="text" placeholder="Acrílico sobre lienzo" value="Acrílico sobre lienzo">
+            </div>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label>Dimensiones</label>
+              <input id="f-dimensiones" type="text" placeholder="100 x 120 cm" value="100 x 120 cm">
+            </div>
+            <div>
+              <label>Categoría</label>
+              <input id="f-categoria" type="text" placeholder="Pintura" value="Pintura">
+            </div>
+          </div>
+
+          <label>Soporte</label>
+          <input id="f-soporte" type="text" placeholder="Lienzo" value="Lienzo">
+
+          <div class="row2">
+            <div>
+              <label>Ciudad de emisión</label>
+              <input id="f-ciudad" type="text" placeholder="Caracas, Venezuela" value="Caracas, Venezuela">
+            </div>
+            <div>
+              <label>Fecha de emisión</label>
+              <input id="f-fecha" type="date">
+            </div>
+          </div>
+
+          <!-- Fotos del Carrusel -->
+          <label>Fotos de la Obra (Máx. 3)</label>
+          <div class="photo-uploader-grid">
+            <!-- Slot 1 (Principal) -->
+            <div class="photo-slot" id="slot-1">
+              <div class="photo-preview-box" onclick="triggerUpload(1)">
+                <span class="placeholder-text"><i class="fa-solid fa-image"></i><br>Principal</span>
+                <img id="img-preview-1" style="display:none;">
+              </div>
+              <div class="photo-actions">
+                <button type="button" class="action-btn" onclick="event.stopPropagation(); triggerUpload(1)" title="Subir foto"><i class="fa-solid fa-upload"></i></button>
+                <button type="button" class="action-btn" onclick="event.stopPropagation(); triggerCamera(1)" title="Capturar"><i class="fa-solid fa-camera"></i></button>
+                <button type="button" class="action-btn edit-btn" onclick="event.stopPropagation(); triggerCrop(1)" title="Recortar" disabled><i class="fa-solid fa-crop-simple"></i></button>
+                <button type="button" class="action-btn delete-btn" onclick="event.stopPropagation(); deletePhoto(1)" title="Borrar" disabled><i class="fa-solid fa-trash"></i></button>
+              </div>
+              <input type="file" id="file-input-1" accept="image/*" style="display:none;" onchange="handleFileSelected(event, 1)">
+            </div>
+            
+            <!-- Slot 2 -->
+            <div class="photo-slot" id="slot-2">
+              <div class="photo-preview-box" onclick="triggerUpload(2)">
+                <span class="placeholder-text"><i class="fa-solid fa-plus"></i><br>Detalle 1</span>
+                <img id="img-preview-2" style="display:none;">
+              </div>
+              <div class="photo-actions">
+                <button type="button" class="action-btn" onclick="event.stopPropagation(); triggerUpload(2)" title="Subir foto"><i class="fa-solid fa-upload"></i></button>
+                <button type="button" class="action-btn" onclick="event.stopPropagation(); triggerCamera(2)" title="Capturar"><i class="fa-solid fa-camera"></i></button>
+                <button type="button" class="action-btn edit-btn" onclick="event.stopPropagation(); triggerCrop(2)" title="Recortar" disabled><i class="fa-solid fa-crop-simple"></i></button>
+                <button type="button" class="action-btn delete-btn" onclick="event.stopPropagation(); deletePhoto(2)" title="Borrar" disabled><i class="fa-solid fa-trash"></i></button>
+              </div>
+              <input type="file" id="file-input-2" accept="image/*" style="display:none;" onchange="handleFileSelected(event, 2)">
+            </div>
+
+            <!-- Slot 3 -->
+            <div class="photo-slot" id="slot-3">
+              <div class="photo-preview-box" onclick="triggerUpload(3)">
+                <span class="placeholder-text"><i class="fa-solid fa-plus"></i><br>Detalle 2</span>
+                <img id="img-preview-3" style="display:none;">
+              </div>
+              <div class="photo-actions">
+                <button type="button" class="action-btn" onclick="event.stopPropagation(); triggerUpload(3)" title="Subir foto"><i class="fa-solid fa-upload"></i></button>
+                <button type="button" class="action-btn" onclick="event.stopPropagation(); triggerCamera(3)" title="Capturar"><i class="fa-solid fa-camera"></i></button>
+                <button type="button" class="action-btn edit-btn" onclick="event.stopPropagation(); triggerCrop(3)" title="Recortar" disabled><i class="fa-solid fa-crop-simple"></i></button>
+                <button type="button" class="action-btn delete-btn" onclick="event.stopPropagation(); deletePhoto(3)" title="Borrar" disabled><i class="fa-solid fa-trash"></i></button>
+              </div>
+              <input type="file" id="file-input-3" accept="image/*" style="display:none;" onchange="handleFileSelected(event, 3)">
+            </div>
+          </div>
+
+          <!-- Logo Uploader -->
+          <label>Identidad (Sello corporativo / Logo)</label>
+          <div class="logo-uploader-box">
+            <div class="logo-preview-box" id="logo-preview-container">
+              <span class="placeholder-text">Logo</span>
+              <img id="logo-preview-img" style="display:none;">
+            </div>
+            <div class="logo-actions">
+              <button type="button" class="btn btn-secondary" onclick="triggerLogoUpload()" style="margin:0;"><i class="fa-solid fa-upload"></i> Subir Logo</button>
+              <button type="button" class="btn btn-secondary del-logo" onclick="deleteLogo()" style="margin:0; color:var(--danger); border-color:rgba(224,87,79,0.3);" disabled><i class="fa-solid fa-trash"></i> Quitar</button>
+            </div>
+            <input type="file" id="logo-file-input" accept="image/*" style="display:none;" onchange="handleLogoSelected(event)">
+          </div>
+
+          <div class="cert-code-box">
+            <div>
+              <span class="lbl">Código</span><br>
+              <span class="code" id="cert-code-display">—</span>
+            </div>
+            <button id="btn-regen" type="button">Regenerar</button>
+          </div>
+
+          <button class="btn btn-primary" id="btn-pdf" type="button">⬇ Descargar PDF (5 × 7 in)</button>
+          <button class="btn btn-secondary" id="btn-save" type="button">＋ Guardar en galería</button>
+          <p class="note" id="save-status">El certificado se guarda en tu galería personal, disponible en tu navegador.</p>
+        </div>
+
+        <!-- Previsualización Horizontal del Certificado -->
+        <div class="preview-col">
+          <div class="preview-shell">
+            <div class="cert-card">
+              <!-- Left Column: Carousel/Image -->
+              <div class="cert-image-container" id="p-image-container">
+                <div class="image-placeholder">
+                  <i class="fa-regular fa-image"></i>
+                  <span>Sin foto de obra<br>(Sube una foto a la izquierda)</span>
+                </div>
+                
+                <img id="p-img-1" src="" class="carousel-item">
+                <img id="p-img-2" src="" class="carousel-item">
+                <img id="p-img-3" src="" class="carousel-item">
+                
+                <!-- Controles del corrused digital -->
+                <button type="button" class="carousel-ctrl prev" onclick="prevCarouselPhoto(event)" style="display:none;">&lsaquo;</button>
+                <button type="button" class="carousel-ctrl next" onclick="nextCarouselPhoto(event)" style="display:none;">&rsaquo;</button>
+                
+                <div class="carousel-indicator" id="p-carousel-indicator" style="display:none;"></div>
+              </div>
+              
+              <!-- Right Column: Metadata details -->
+              <div class="cert-content-container">
+                <div class="cert-header">
+                  <div class="cert-eyebrow">Certificado de</div>
+                  <div class="cert-heading">Autenticidad</div>
+                  <div class="cert-title" id="p-titulo">Karichuana: Mujer del Viento</div>
+                  <div class="cert-epigraph" id="p-epigrafe">La Mirada que Abrió el Espacio</div>
+                  <div class="cert-divider"></div>
+                </div>
+                
+                <div class="cert-details">
+                  <div class="item"><span class="k">Artista</span><span class="v" id="p-artista">Rosymer Martínez Salazar</span></div>
+                  <div class="item"><span class="k">Año</span><span class="v" id="p-anio">2026</span></div>
+                  <div class="item"><span class="k">Técnica</span><span class="v" id="p-tecnica">Acrílico sobre lienzo</span></div>
+                  <div class="item"><span class="k">Dimensiones</span><span class="v" id="p-dimensiones">100 x 120 cm</span></div>
+                  <div class="item"><span class="k">Categoría</span><span class="v" id="p-categoria">Pintura</span></div>
+                  <div class="item"><span class="k">Soporte</span><span class="v" id="p-soporte">Lienzo</span></div>
+                </div>
+                
+                <div class="cert-footer">
+                  <div class="seal" id="p-seal">RM</div>
+                  <div class="cert-qr" id="p-qr"></div>
+                  <div class="cert-meta">
+                    <div class="code" id="p-code">—</div>
+                    <div class="place" id="p-place">Caracas, Venezuela</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="size-hint">Vista previa interactiva · Proporción real de 5 × 7 in</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modificar Galería -->
+    <div id="view-gallery">
+      <header class="hero">
+        <div class="eyebrow">Base de obras</div>
+        <h2>Galería de certificados</h2>
+        <p>Todos los certificados que has guardado. Selecciona editar para cargarlo o borrar para removerlo permanentemente.</p>
+      </header>
+      <div id="gallery-container">
+        <div class="gallery-empty">
+          <div class="icon">⏳</div>
+          Cargando galería...
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal para Recortador de Imagen (CropperJS) -->
+<div class="modal" id="crop-modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4>Ajustar y Recortar Imagen</h4>
+      <button type="button" class="close-btn" onclick="closeCropModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="cropper-container">
+        <img id="cropper-image" src="" alt="Imagen a recortar">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="rotateLeftCropper()"><i class="fa-solid fa-rotate-left"></i> Rotar Izq.</button>
+      <button type="button" class="btn btn-secondary" onclick="rotateRightCropper()"><i class="fa-solid fa-rotate-right"></i> Rotar Der.</button>
+      <button type="button" class="btn btn-primary" onclick="saveCroppedImage()"><i class="fa-solid fa-check"></i> Guardar Recorte</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Cámara -->
+<div class="modal" id="camera-modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4>Capturar Obra</h4>
+      <button type="button" class="close-btn" onclick="closeCameraModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="camera-stream-container">
+        <video id="camera-video" autoplay playsinline></video>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeCameraModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="captureCameraFrame()"><i class="fa-solid fa-camera"></i> Tomar Foto</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Configuración Supabase -->
+<div class="modal" id="settings-modal" style="display:none;">
+  <div class="modal-content" style="max-width:440px;">
+    <div class="modal-header">
+      <h4>Conectar Supabase</h4>
+      <button type="button" class="close-btn" onclick="closeSettingsModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:15px 20px;">
+      <p style="font-size:11.5px; color:var(--text-dim); margin-top:0; line-height:1.4;">Para habilitar la verificación del comprador final al escanear el código QR, introduce la URL y Anon Key pública de tu base de datos de Supabase.</p>
+      
+      <label class="first" style="margin-top:10px;">Supabase URL</label>
+      <input id="cfg-sup-url" type="text" placeholder="https://xxxxxxxxxxxxxx.supabase.co" style="padding:8px 12px; font-size:13px;">
+      
+      <label style="margin-top:12px;">Supabase Anon Key</label>
+      <input id="cfg-sup-key" type="password" placeholder="Tu API Key pública (Anon Key)" style="padding:8px 12px; font-size:13px;">
+      
+      <div style="margin-top:16px; background:rgba(184,151,90,0.06); border-radius:10px; padding:10px; border:1px solid rgba(184,151,90,0.14);">
+        <strong style="font-size:10.5px; color:#b8975a; text-transform:uppercase; letter-spacing:0.04em;">Instrucción:</strong>
+        <p style="font-size:10.5px; margin:4px 0 0; line-height:1.3; color:var(--ink);">Crea una tabla en Supabase llamada <code>certificates</code> con columnas básicas (code, titulo, epigrafe, artista, anio, tecnica, soporte, dimensiones, categoria, ciudad, fecha, photo_1, photo_2, photo_3, logo, etc.) y habilita las políticas RLS.</p>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:10px 20px;">
+      <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()" style="padding:8px 12px; font-size:12px; width:auto; margin:0;">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="saveSettings()" style="padding:8px 16px; font-size:12px; width:auto; margin:0; background:linear-gradient(135deg, var(--gold) 0%, #aa7c11 100%); border-color:var(--gold); color:#fff;"><i class="fa-solid fa-cloud-arrow-up"></i> Conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Flotante de Descarga de PWA -->
+<div id="pwa-install-prompt" class="pwa-prompt" style="display:none;">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+    <div id="pwa-prompt-icon" style="width:44px; height:44px; min-width:44px; border-radius:12px; background:#fff; box-shadow:0 3px 8px rgba(0,0,0,0.08); border:1px solid #eceff1; display:flex; align-items:center; justify-content:center; overflow:hidden;"></div>
+    <div style="flex:1;">
+      <h4 style="margin:0; font-size:13px; font-weight:800; color:var(--ink);">Descargar App</h4>
+      <p style="margin:2px 0 0; font-size:10.5px; color:var(--text-dim); line-height:1.25;">Instala el Generador de Certificados de Autenticidad en la pantalla de tu móvil.</p>
+    </div>
+    <button onclick="dismissInstallPrompt()" style="background:none; border:none; font-size:20px; color:var(--text-dim); cursor:pointer; padding:4px; font-weight:bold; line-height:1;">&times;</button>
+  </div>
+  <div id="pwa-trigger-area"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// --- CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE ---
+let supabase = null;
+let supUrl = localStorage.getItem('supabase_url') || '';
+let supKey = localStorage.getItem('supabase_anon_key') || '';
+
+function initSupabase() {
+  if (supUrl && supKey) {
+    try {
+      supabase = window.supabase.createClient(supUrl, supKey);
+      console.log("Supabase inicializado correctamente.");
+    } catch (err) {
+      console.error("Error al inicializar cliente Supabase:", err);
+      supabase = null;
+    }
+  } else {
+    supabase = null;
+  }
+}
+initSupabase();
+
+// Eventos para el Modal de Configuración Supabase
+function closeSettingsModal() {
+  $('settings-modal').style.display = 'none';
+}
+
+function saveSettings() {
+  const urlVal = $('cfg-sup-url').value.trim();
+  const keyVal = $('cfg-sup-key').value.trim();
+  
+  localStorage.setItem('supabase_url', urlVal);
+  localStorage.setItem('supabase_anon_key', keyVal);
+  
+  supUrl = urlVal;
+  supKey = keyVal;
+  initSupabase();
+  
+  alert("Credenciales de Supabase actualizadas satisfactoriamente.");
+  closeSettingsModal();
+}
+
+// Evento del botón de configuración
+$('btn-settings').addEventListener('click', () => {
+  $('cfg-sup-url').value = supUrl;
+  $('cfg-sup-key').value = supKey;
+  $('settings-modal').style.display = 'flex';
+});
+
+const fields = ['titulo','epigrafe','artista','anio','tecnica','dimensiones','categoria','soporte','ciudad','fecha'];
+let certCode = '';
+let editingId = null;
+
+// Lista de base64 strings para las 3 fotos de la obra y el logo
+let artPhotos = ['', '', ''];
+let logoBase64 = 'data:image/png;base64,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';
+941: function escapeHtml(str){
+942:   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+943: }
+944: 
+945: // --- GENERADOR DE PDF HORIZONTAL (7 x 5 in) ---
+946: $('btn-pdf').addEventListener('click', () => {
+947:   const { jsPDF } = window.jspdf;
+948:   const doc = new jsPDF({ unit:'in', format:[7,5], orientation:'landscape' });
+949: 
+950:   const inkR=11, inkG=46, inkB=43;
+951:   const goldR=184, goldG=151, goldB=90;
+952:   const paperR=255, paperG=255, paperB=255;
+953:   const dimR=108, dimG=137, dimB=133;
+954:   const W = 7, H = 5;
+955: 
+956:   // Fondo del papel
+957:   doc.setFillColor(paperR,paperG,paperB);
+958:   doc.rect(0,0,W,H,'F');
+959: 
+960:   // Bordes del Certificado (Doble línea dorada clásica)
+961:   doc.setDrawColor(goldR,goldG,goldB);
+962:   doc.setLineWidth(0.018);
+963:   doc.rect(0.22,0.22,W-0.44,H-0.44);
+964:   doc.setLineWidth(0.008);
+965:   doc.rect(0.30,0.30,W-0.60,H-0.60);
+966: 
+967:   // --- COLUMNA IZQUIERDA: Imagen de la obra principal ---
+968:   const boxW = 3.1;
+969:   const boxH = 4.2;
+970:   const boxX = 0.4;
+971:   const boxY = 0.4;
+972: 
+973:   if (artPhotos[0]) {
+974:     try {
+975:       const imgEl = $('p-img-1');
+976:       let imgW = imgEl.naturalWidth || 800;
+977:       let imgH = imgEl.naturalHeight || 1000;
+978:       let imgRatio = imgW / imgH;
+979:       const boxRatio = boxW / boxH;
+980: 
+981:       let drawW = boxW;
+982:       let drawH = boxH;
+983:       let drawX = boxX;
+984:       let drawY = boxY;
+985: 
+986:       // Calcular proporción fit sin deformar
+987:       if (imgRatio > boxRatio) {
+988:         drawW = boxW;
+989:         drawH = boxW / imgRatio;
+990:         drawY = boxY + (boxH - drawH) / 2;
+991:       } else {
+992:         drawH = boxH;
+993:         drawW = boxH * imgRatio;
+994:         drawX = boxX + (boxW - drawW) / 2;
+995:       }
+996: 
+997:       // Dibujar imagen
+998:       doc.addImage(artPhotos[0], 'JPEG', drawX, drawY, drawW, drawH);
+999:     } catch (err) {
+1000:       console.error("Error al añadir la foto al PDF:", err);
+1001:       doc.setFillColor(242, 246, 245);
+1002:       doc.rect(boxX, boxY, boxW, boxH, 'F');
+1003:     }
+1004:   } else {
+1005:     // Rectángulo vacío si no hay foto
+1006:     doc.setFillColor(242, 246, 245);
+1007:     doc.rect(boxX, boxY, boxW, boxH, 'F');
+1008:     doc.setDrawColor(dimR, dimG, dimB);
+1009:     doc.setLineWidth(0.005);
+1010:     doc.rect(boxX, boxY, boxW, boxH);
+1011:     doc.setFont('helvetica', 'italic');
+1012:     doc.setFontSize(9.5);
+1013:     doc.setTextColor(dimR, dimG, dimB);
+1014:     doc.text('Foto de la Obra', boxX + boxW/2, boxY + boxH/2, { align: 'center' });
+1015:   }
+1016: 
+1017:   // --- COLUMNA DERECHA: Metadatos y Estilo ---
+1018:   const rightX = 3.8;
+1019:   const rightW = 2.8;
+1020:   const midX = rightX + rightW/2;
+1021:   
+1022:   let y = 0.70;
+1023:   doc.setFont('helvetica','bold');
+1024:   doc.setFontSize(10.5);
+1025:   doc.setTextColor(goldR,goldG,goldB);
+1026:   doc.text('CERTIFICADO DE', midX, y, { align: 'center', charSpace:0.06 });
+1027:   
+1028:   y += 0.22;
+1029:   doc.setFontSize(17);
+1030:   doc.setTextColor(inkR,inkG,inkB);
+1031:   doc.text('AUTENTICIDAD', midX, y, { align: 'center', charSpace:0.08 });
+1032: 
+1033:   y += 0.08;
+1034:   doc.setDrawColor(goldR,goldG,goldB);
+1035:   doc.setLineWidth(0.018);
+1036:   doc.line(midX - 0.5, y, midX + 0.5, y);
+1037:   
+1038:   y += 0.28;
+1039:   doc.setFont('helvetica','bold');
+1040:   doc.setFontSize(14.5);
+1041:   doc.setTextColor(inkR,inkG,inkB);
+1042:   const titulo = $('f-titulo').value || 'Título de la obra';
+1043:   const tituloLines = doc.splitTextToSize(titulo, rightW);
+1044:   doc.text(tituloLines, midX, y, { align: 'center' });
+1045:   y += tituloLines.length * 0.20 + 0.02;
+1046: 
+1047:   const epigrafe = $('f-epigrafe').value;
+1048:   if(epigrafe){
+1049:     doc.setFont('helvetica','italic');
+1050:     doc.setFontSize(10);
+1051:     doc.setTextColor(goldR,goldG,goldB);
+1052:     const epiLines = doc.splitTextToSize(epigrafe, rightW);
+1053:     doc.text(epiLines, midX, y, { align: 'center' });
+1054:     y += epiLines.length * 0.16;
+1055:   }
+1056: 
+1057:   // Detalles en Grid (2 Columnas izquierda-derecha)
+1058:   const details = [
+1059:     ['ARTISTA', $('f-artista').value || '—'],
+1060:     ['AÑO', $('f-anio').value || '—'],
+1061:     ['TÉCNICA', $('f-tecnica').value || '—'],
+1062:     ['DIMENSIONES', $('f-dimensiones').value || '—'],
+1063:     ['CATEGORÍA', $('f-categoria').value || '—'],
+1064:     ['SOPORTE', $('f-soporte').value || '—'],
+1065:   ];
+1066:   
+1067:   const colX = [rightX, rightX + 1.45];
+1068:   const colW = 1.35;
+1069:   const gridStartY = 1.95;
+1070:   
+1071:   details.forEach((d, i) => {
+1072:     const col = i % 2;
+1073:     const row = Math.floor(i / 2);
+1074:     const x = colX[col];
+1075:     const rowY = gridStartY + row * 0.55;
+1076:     
+1077:     doc.setFont('helvetica','normal');
+1078:     doc.setFontSize(8.5);
+1079:     doc.setTextColor(dimR,dimG,dimB);
+1080:     doc.text(d[0], x, rowY, { charSpace:0.04 });
+1081:     
+1082:     doc.setFont('helvetica','bold');
+1083:     doc.setFontSize(10.5);
+1084:     doc.setTextColor(inkR,inkG,inkB);
+1085:     const valLines = doc.splitTextToSize(d[1], colW);
+1086:     doc.text(valLines, x, rowY + 0.14);
+1087:   });
+1088: 
+1089:   const footerY = H - 0.70;
+1090:   
+1091:   // Línea divisoria del pie
+1092:   doc.setDrawColor(goldR,goldG,goldB);
+1093:   doc.setLineWidth(0.006);
+1094:   doc.line(rightX, footerY - 0.10, rightX + rightW, footerY - 0.10);
+1095: 
+1096:   // Logo / iniciales
+1097:   const sealCx = rightX + 0.25, sealCy = footerY + 0.18, sealR = 0.24;
+1098:   if (logoBase64) {
+1099:     try {
+1100:       doc.addImage(logoBase64, 'PNG', sealCx - sealR, sealCy - sealR, sealR * 2, sealR * 2);
+1101:     } catch (logoErr) {
+1102:       console.error("Error al incrustar logotipo en PDF:", logoErr);
+1103:       doc.setFillColor(goldR,goldG,goldB);
+1104:       doc.circle(sealCx, sealCy, sealR, 'F');
+1105:       doc.setFont('helvetica','bold');
+1106:       doc.setFontSize(10);
+1107:       doc.setTextColor(255,255,255);
+1108:       doc.text(initials($('f-artista').value || 'AR'), sealCx, sealCy + 0.04, { align:'center' });
+1109:     }
+1110:   } else {
+1111:     doc.setFillColor(goldR,goldG,goldB);
+1112:     doc.circle(sealCx, sealCy, sealR, 'F');
+1113:     doc.setFont('helvetica','bold');
+1114:     doc.setFontSize(10);
+1115:     doc.setTextColor(255,255,255);
+1116:     doc.text(initials($('f-artista').value || 'AR'), sealCx, sealCy + 0.04, { align:'center' });
+1117:   }
+1118: 
+1119:   // QR Code de Verificación en PDF (Centrado en el pie)
+1120:   try {
+1121:     const qrImg = $('p-qr').querySelector('img');
+1122:     if (qrImg) {
+1123:       doc.addImage(qrImg, 'PNG', rightX + 1.15, footerY - 0.05, 0.46, 0.46);
+1124:     }
+1125:   } catch (qrErr) {
+1126:     console.error("Error al incrustar el código QR en el PDF:", qrErr);
+1127:   }
+1128: 
+1129:   // Código y Ciudad/Fecha
+1130:   doc.setFont('helvetica','bold');
+1131:   doc.setFontSize(11);
+1132:   doc.setTextColor(goldR,goldG,goldB);
+1133:   doc.text(certCode, rightX + rightW, footerY + 0.08, { align:'right', charSpace:0.03 });
+1134:   
+1135:   doc.setFont('helvetica','normal');
+1136:   doc.setFontSize(9);
+1137:   doc.setTextColor(dimR,dimG,dimB);
+1138:   const place = [$('f-ciudad').value, formatDate($('f-fecha').value)].filter(Boolean).join(' · ');
+1139:   doc.text(place, rightX + rightW, footerY + 0.22, { align:'right' });
+1140: 
+1141:   const safeTitle = (titulo || 'certificado').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+1142:   doc.save(`certificado-${safeTitle || 'obra'}.pdf`);
+1143: });
+1144: 
+1145: // --- DETECTOR DEL MODO COMPRADOR (VISOR PÚBLICO) ---
+1146: async function checkBuyerMode() {
+1147:   const params = new URLSearchParams(window.location.search);
+1148:   const code = params.get('code');
+1149:   if (!code) return; // Si no hay parámetro, es el panel administrador normal
+1150:   
+1151:   console.log("Visualización de Comprador Activada. Código:", code);
+1152:   
+1153:   // Ocultar elementos del administrador
+1154:   if ($('btn-settings')) $('btn-settings').style.display = 'none';
+1155:   const segmented = document.querySelector('.segmented');
+1156:   if (segmented) segmented.style.display = 'none';
+1157:   
+1158:   const hero = document.querySelector('header.hero');
+1159:   if (hero) hero.style.display = 'none';
+1160:   
+1161:   const panel = document.querySelector('.panel');
+1162:   if (panel) panel.style.display = 'none';
+1163:   
+1164:   const grid = document.querySelector('.grid');
+1165:   if (grid) {
+1166:     grid.style.gridTemplateColumns = '1fr';
+1167:     grid.style.justifyContent = 'center';
+1168:   }
+1169:   
+1170:   if ($('btn-save')) $('btn-save').style.display = 'none';
+1171:   if ($('btn-regen')) $('btn-regen').style.display = 'none';
+1172:   if ($('save-status')) $('save-status').style.display = 'none';
+1173:   
+1174:   // Crear Banner de Certificación
+1175:   const mainEl = document.querySelector('main');
+1176:   const banner = document.createElement('div');
+1177:   banner.className = 'buyer-banner';
+1178:   banner.innerHTML = `
+1179:     <div style="display:flex; align-items:center; justify-content:center; gap:12px; max-width:400px; margin:0 auto; text-align:left;">
+1180:       <i class="fa-solid fa-circle-check" style="color:var(--gold); font-size:24px;"></i>
+1181:       <div>
+1182:         <h4 style="margin:0; font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink);">Certificado de Autenticidad Validado</h4>
+1183:         <p style="margin:2px 0 0; font-size:11px; color:var(--text-dim); line-height:1.35;">Este documento digital confirma el registro y procedencia de la obra de arte original de Rosymer Martínez.</p>
+1184:       </div>
+1185:     </div>
+1186:   `;
+1187:   banner.setAttribute('style', `
+1188:     margin-bottom: 24px;
+1189:     padding: 16px 20px;
+1190:     background: rgba(184,151,90,0.06);
+1191:     border: 1px dashed rgba(184,151,90,0.3);
+1192:     border-radius: 16px;
+1193:   `);
+1194:   mainEl.insertBefore(banner, mainEl.firstChild);
+1195:   
+1196:   const statusBanner = document.createElement('div');
+1197:   statusBanner.id = 'buyer-loading-status';
+1198:   statusBanner.innerHTML = 'Verificando firma del certificado...';
+1199:   statusBanner.setAttribute('style', 'font-size:12px; color:var(--text-dim); text-align:center; margin-bottom:16px; font-weight:600;');
+1200:   mainEl.insertBefore(statusBanner, banner.nextSibling);
+1201:   
+1202:   // Si no hay Supabase aún configurado, probar localmente
+1203:   if (!supabase) {
+1204:     const key = 'cert:' + code;
+1205:     try {
+1206:       const res = await window.storage.get(key, false);
+1207:       if (res && res.value) {
+1208:         const localData = JSON.parse(res.value);
+1209:         fillForm(localData);
+1210:         statusBanner.innerHTML = '<span style="color:var(--gold); font-weight:bold;">[Modo local] Certificado verificado desde la base de datos local.</span>';
+1211:         return;
+1212:       }
+1213:     } catch(e) {}
+1214:     statusBanner.innerHTML = '<span style="color:var(--danger);">Base de datos Supabase ausente. Conéctala para verificar firmas online.</span>';
+1215:     return;
+1216:   }
+1217:   
+1218:   try {
+1219:     statusBanner.innerHTML = 'Consultando registros en la nube de Supabase...';
+1220:     const { data, error } = await supabase
+1221:       .from('certificates')
+1222:       .select('*')
+1223:       .eq('code', code)
+1224:       .single();
+1225:       
+1226:     if (error || !data) {
+1227:       statusBanner.innerHTML = '<span style="color:var(--danger); font-weight:bold;">✘ Error de verificación: Código no registrado en la base de datos oficial.</span>';
+1228:       return;
+1229:     }
+1230:     
+1231:     statusBanner.innerHTML = '<span style="color:var(--aqua-deep); font-weight:bold;">✓ Sincronización oficial: Firmado digitalmente de forma correcta.</span>';
+1232:     
+1233:     // Rellenar certificado
+1234:     const parsedData = {
+1235:       code: data.code,
+1236:       titulo: data.titulo,
+1237:       epigrafe: data.epigrafe,
+1238:       artista: data.artista,
+1239:       anio: data.anio,
+1240:       tecnica: data.tecnica,
+1241:       dimensiones: data.dimensiones,
+1242:       categoria: data.categoria,
+1243:       soporte: data.soporte,
+1244:       ciudad: data.ciudad,
+1245:       fecha: data.fecha,
+1246:       photos: [data.photo_1 || '', data.photo_2 || '', data.photo_3 || ''],
+1247:       logo: data.logo || ''
+1248:     };
+1249:     
+1250:     fillForm(parsedData);
+1251:   } catch(err) {
+1252:     statusBanner.innerHTML = `<span style="color:var(--danger);">Error al contactar Supabase: ${err.message}</span>`;
+1253:   }
+1254: }
+1255: 
+1256: // --- INTERFAZ COMPRADOR EXPLICATIVO ---
+1257: function dismissInstallPrompt() {
+1258:   const p = $('pwa-install-prompt');
+1259:   if(p) p.style.display = 'none';
+1260: }
+1261: 
+1262: // --- EVENTOS DEL FORMULARIO Y NAVEGACIÓN ---
+1263: fields.forEach(f => $('f-'+f).addEventListener('input', updatePreview));
+1264: $('btn-regen').addEventListener('click', regenCode);
+1265: const today = new Date();
+1266: $('f-fecha').value = today.toISOString().slice(0,10);
+1267: regenCode();
+1268: initDefaultLogo();
+1269: 
+1270: document.querySelectorAll('.segmented button').forEach(btn => {
+1271:   btn.addEventListener('click', () => {
+1272:     document.querySelectorAll('.segmented button').forEach(b => b.classList.remove('active'));
+1273:     btn.classList.add('active');
+1274:     const view = btn.dataset.view;
+1275:     $('view-nuevo').style.display = view === 'nuevo' ? 'block' : 'none';
+1276:     $('view-gallery').style.display = view === 'gallery' ? 'block' : 'none';
+1277:     if(view === 'gallery') loadGallery();
+1278:   });
+1279: });
+1280: 
+1281: $('btn-save').addEventListener('click', async () => {
+1282:   const data = getFormData();
+1283:   const key = 'cert:' + (editingId || certCode);
+1284:   const statusEl = $('save-status');
+1285:   statusEl.textContent = 'Guardando en galería local...';
+1286:   try{
+1287:     const result = await window.storage.set(key, JSON.stringify(data), false);
+1288:     if(result){
+1289:       editingId = certCode;
+1290:       
+1291:       // Sincronización oficial con Supabase
+1292:       if (supabase) {
+1293:         statusEl.textContent = 'Sincronizando con Supabase...';
+1294:         const payload = {
+1295:           code: certCode,
+1296:           titulo: data.titulo,
+1297:           epigrafe: data.epigrafe,
+1298:           artista: data.artista,
+1299:           anio: parseInt(data.anio) || null,
+1300:           tecnica: data.tecnica,
+1301:           dimensiones: data.dimensiones,
+1302:           categoria: data.categoria,
+1303:           soporte: data.soporte,
+1304:           ciudad: data.ciudad,
+1305:           fecha: data.fecha || null,
+1306:           photo_1: data.photos[0] || null,
+1307:           photo_2: data.photos[1] || null,
+1308:           photo_3: data.photos[2] || null,
+1309:           logo: data.logo || null
+1310:         };
+1311:         
+1312:         const { error } = await supabase
+1313:           .from('certificates')
+1314:           .upsert(payload, { onConflict: 'code' });
+1315:           
+1316:         if (error) {
+1317:           console.error("Error al persistir en Supabase:", error);
+1318:           statusEl.textContent = 'Guardado localmente. Error al sincronizar con Supabase: ' + error.message;
+1319:         } else {
+1320:           statusEl.textContent = 'Certificado guardado localmente e integrado con la nube de Supabase.';
+1321:         }
+1322:       } else {
+1323:         statusEl.textContent = 'Certificado guardado localmente (Supabase no está conectado).';
+1324:       }
+1325:     } else {
+1326:       statusEl.textContent = 'No se pudo guardar. Intenta de nuevo.';
+1327:     }
+1328:   } catch(e){
+1329:     console.error('Error guardando certificado:', e);
+1330:     statusEl.textContent = 'No se pudo guardar. Intenta de nuevo.';
+1331:   }
+1332: });
+1333: 
+1334: async function loadGallery(){
+1335:   const container = $('gallery-container');
+1336:   container.innerHTML = '<div class="gallery-empty"><div class="icon">⏳</div>Cargando galería...</div>';
+1337:   try{
+1338:     const list = await window.storage.list('cert:', false);
+1339:     const keys = (list && list.keys) ? list.keys : [];
+1340:     if(keys.length === 0){
+1341:       container.innerHTML = '<div class="gallery-empty"><div class="icon">🖼</div>Aún no has guardado certificados.<br>Crea uno y haz clic en "Guardar en galería".</div>';
+1342:       return;
+1343:     }
+1344:     const items = [];
+1345:     for(const key of keys){
+1346:       try{
+1347:         const res = await window.storage.get(key, false);
+1348:         if(res && res.value){
+1349:           items.push({ key, data: JSON.parse(res.value) });
+1350:         }
+1351:       } catch(e){ /* Ignorar */ }
+1352:     }
+1353:     if(items.length === 0){
+1354:       container.innerHTML = '<div class="gallery-empty"><div class="icon">🖼</div>Aún no has guardado certificados.</div>';
+1355:       return;
+1356:     }
+1357:     container.innerHTML = '<div class="gallery-grid"></div>';
+1358:     const grid = container.querySelector('.gallery-grid');
+1359:     items.forEach(({key, data}) => {
+1360:       const card = document.createElement('div');
+1361:       card.className = 'gallery-card';
+1362:       const thumbnailStyle = data.photos && data.photos[0] 
+1363:         ? `background-image: url(${data.photos[0]}); background-size: cover; background-position: center;` 
+1364:         : `background: rgba(20,60,55,0.04); display:flex; align-items:center; justify-content:center;`;
+1365:       const thumbContent = data.photos && data.photos[0] ? '' : '<i class="fa-regular fa-image" style="color:var(--text-dim); font-size:22px;"></i>';
+1366: 
+1367:       card.innerHTML = `
+1368:         <div class="g-thumb" style="${thumbnailStyle} width:100%; height:110px; border-radius:12px; margin-bottom:12px; overflow:hidden; border: 1px solid rgba(20,60,55,0.08);">${thumbContent}</div>
+1369:         <div class="g-title">${escapeHtml(data.titulo || 'Sin título')}</div>
+1370:         <div class="g-artist">${escapeHtml(data.artista || '—')} · ${escapeHtml(data.anio || '')}</div>
+1371:         <div class="g-code">${escapeHtml(data.code || '')}</div>
+1372:         <div class="g-actions">
+1373:           <button class="edit">Editar</button>
+1374:           <button class="del">Eliminar</button>
+1375:         </div>
+1376:       `;
+1377:       card.querySelector('.edit').addEventListener('click', (e) => {
+1378:         e.stopPropagation();
+1379:         editingId = data.code;
+1380:         fillForm(data);
+1381:         document.querySelector('.segmented button[data-view="nuevo"]').click();
+1382:       });
+1383:       card.querySelector('.del').addEventListener('click', async (e) => {
+1384:         e.stopPropagation();
+1385:         if(confirm('¿Seguro que deseas eliminar este certificado?')){
+1386:           try{
+1387:             await window.storage.delete(key, false);
+1388:             if (supabase) {
+1389:               const { error } = await supabase
+1390:                 .from('certificates')
+1391:                 .delete()
+1392:                 .eq('code', data.code);
+1393:               if (error) console.error("Error al eliminar de Supabase:", error);
+1394:             }
+1395:             loadGallery();
+1396:           } catch(err){ console.error('Error eliminando:', err); }
+1397:         }
+1398:       });
+1399:       grid.appendChild(card);
+1400:     });
+1401:   } catch(e){
+1402:     console.error('Error cargando galería:', e);
+1403:     container.innerHTML = '<div class="gallery-empty"><div class="icon">⚠️</div>No se pudo cargar la galería.</div>';
+1404:   }
+1405: }
+1406: 
+1407: // --- GENERADOR DE PDF HORIZONTAL (7 x 5 in) ---
+1408: $('btn-pdf').addEventListener('click', () => {
+1409:   const { jsPDF } = window.jspdf;
+1410:   const doc = new jsPDF({ unit:'in', format:[7,5], orientation:'landscape' });
+1411: 
+1412:   const inkR=11, inkG=46, inkB=43;
+1413:   const goldR=184, goldG=151, goldB=90;
+1414:   const paperR=255, paperG=255, paperB=255;
+1415:   const dimR=108, dimG=137, dimB=133;
+1416:   const W = 7, H = 5;
+1417: 
+1418:   // Fondo del papel
+1419:   doc.setFillColor(paperR,paperG,paperB);
+1420:   doc.rect(0,0,W,H,'F');
+1421: 
+1422:   // Bordes del Certificado (Doble línea dorada clásica)
+1423:   doc.setDrawColor(goldR,goldG,goldB);
+1424:   doc.setLineWidth(0.018);
+1425:   doc.rect(0.22,0.22,W-0.44,H-0.44);
+1426:   doc.setLineWidth(0.008);
+1427:   doc.rect(0.30,0.30,W-0.60,H-0.60);
+1428: 
+1429:   // --- COLUMNA IZQUIERDA: Imagen de la obra principal ---
+1430:   const boxW = 3.1;
+1431:   const boxH = 4.2;
+1432:   const boxX = 0.4;
+1433:   const boxY = 0.4;
+1434: 
+1435:   if (artPhotos[0]) {
+1436:     try {
+1437:       const imgEl = $('p-img-1');
+1438:       let imgW = imgEl.naturalWidth || 800;
+1439:       let imgH = imgEl.naturalHeight || 1000;
+1440:       let imgRatio = imgW / imgH;
+1441:       const boxRatio = boxW / boxH;
+1442: 
+1443:       let drawW = boxW;
+1444:       let drawH = boxH;
+1445:       let drawX = boxX;
+1446:       let drawY = boxY;
+1447: 
+1448:       // Calcular proporción fit sin deformar
+1449:       if (imgRatio > boxRatio) {
+1450:         drawW = boxW;
+1451:         drawH = boxW / imgRatio;
+1452:         drawY = boxY + (boxH - drawH) / 2;
+1453:       } else {
+1454:         drawH = boxH;
+1455:         drawW = boxH * imgRatio;
+1456:         drawX = boxX + (boxW - drawW) / 2;
+1457:       }
+1458: 
+1459:       // Dibujar imagen
+1460:       doc.addImage(artPhotos[0], 'JPEG', drawX, drawY, drawW, drawH);
+1461:     } catch (err) {
+1462:       console.error("Error al añadir la foto al PDF:", err);
+1463:       doc.setFillColor(242, 246, 245);
+1464:       doc.rect(boxX, boxY, boxW, boxH, 'F');
+1465:     }
+1466:   } else {
+1467:     // Rectángulo vacío si no hay foto
+1468:     doc.setFillColor(242, 246, 245);
+1469:     doc.rect(boxX, boxY, boxW, boxH, 'F');
+1470:     doc.setDrawColor(dimR, dimG, dimB);
+1471:     doc.setLineWidth(0.005);
+1472:     doc.rect(boxX, boxY, boxW, boxH);
+1473:     doc.setFont('helvetica', 'italic');
+1474:     doc.setFontSize(9.5);
+1475:     doc.setTextColor(dimR, dimG, dimB);
+1476:     doc.text('Foto de la Obra', boxX + boxW/2, boxY + boxH/2, { align: 'center' });
+1477:   }
+1478: 
+1479:   // --- COLUMNA DERECHA: Metadatos y Estilo ---
+1480:   const rightX = 3.8;
+1481:   const rightW = 2.8;
+1482:   const midX = rightX + rightW/2;
+1483:   
+1484:   let y = 0.70;
+1485:   doc.setFont('helvetica','bold');
+1486:   doc.setFontSize(10.5);
+1487:   doc.setTextColor(goldR,goldG,goldB);
+1488:   doc.text('CERTIFICADO DE', midX, y, { align: 'center', charSpace:0.06 });
+1489:   
+1490:   y += 0.22;
+1491:   doc.setFontSize(17);
+1492:   doc.setTextColor(inkR,inkG,inkB);
+1493:   doc.text('AUTENTICIDAD', midX, y, { align: 'center', charSpace:0.08 });
+1494: 
+1495:   y += 0.08;
+1496:   doc.setDrawColor(goldR,goldG,goldB);
+1497:   doc.setLineWidth(0.018);
+1498:   doc.line(midX - 0.5, y, midX + 0.5, y);
+1499:   
+1500:   y += 0.28;
+1501:   doc.setFont('helvetica','bold');
+1502:   doc.setFontSize(14.5);
+1503:   doc.setTextColor(inkR,inkG,inkB);
+1504:   const titulo = $('f-titulo').value || 'Título de la obra';
+1505:   const tituloLines = doc.splitTextToSize(titulo, rightW);
+1506:   doc.text(tituloLines, midX, y, { align: 'center' });
+1507:   y += tituloLines.length * 0.20 + 0.02;
+1508: 
+1509:   const epigrafe = $('f-epigrafe').value;
+1510:   if(epigrafe){
+1511:     doc.setFont('helvetica','italic');
+1512:     doc.setFontSize(10);
+1513:     doc.setTextColor(goldR,goldG,goldB);
+1514:     const epiLines = doc.splitTextToSize(epigrafe, rightW);
+1515:     doc.text(epiLines, midX, y, { align: 'center' });
+1516:     y += epiLines.length * 0.16;
+1517:   }
+1518: 
+1519:   // Detalles en Grid (2 Columnas izquierda-derecha)
+1520:   const details = [
+1521:     ['ARTISTA', $('f-artista').value || '—'],
+1522:     ['AÑO', $('f-anio').value || '—'],
+1523:     ['TÉCNICA', $('f-tecnica').value || '—'],
+1524:     ['DIMENSIONES', $('f-dimensiones').value || '—'],
+1525:     ['CATEGORÍA', $('f-categoria').value || '—'],
+1526:     ['SOPORTE', $('f-soporte').value || '—'],
+1527:   ];
+1528:   
+1529:   const colX = [rightX, rightX + 1.45];
+1530:   const colW = 1.35;
+1531:   const gridStartY = 1.95;
+1532:   
+1533:   details.forEach((d, i) => {
+1534:     const col = i % 2;
+1535:     const row = Math.floor(i / 2);
+1536:     const x = colX[col];
+1537:     const rowY = gridStartY + row * 0.55;
+1538:     
+1539:     doc.setFont('helvetica','normal');
+1540:     doc.setFontSize(8.5);
+1541:     doc.setTextColor(dimR,dimG,dimB);
+1542:     doc.text(d[0], x, rowY, { charSpace:0.04 });
+1543:     
+1544:     doc.setFont('helvetica','bold');
+1545:     doc.setFontSize(10.5);
+1546:     doc.setTextColor(inkR,inkG,inkB);
+1547:     const valLines = doc.splitTextToSize(d[1], colW);
+1548:     doc.text(valLines, x, rowY + 0.14);
+1549:   });
+1550: 
+1551:   const footerY = H - 0.70;
+1552:   
+1553:   // Línea divisoria del pie
+1554:   doc.setDrawColor(goldR,goldG,goldB);
+1555:   doc.setLineWidth(0.006);
+1556:   doc.line(rightX, footerY - 0.10, rightX + rightW, footerY - 0.10);
+1557: 
+1558:   // Logo / iniciales
+1559:   const sealCx = rightX + 0.25, sealCy = footerY + 0.18, sealR = 0.24;
+1560:   if (logoBase64) {
+1561:     try {
+1562:       doc.addImage(logoBase64, 'PNG', sealCx - sealR, sealCy - sealR, sealR * 2, sealR * 2);
+1563:     } catch (logoErr) {
+1564:       console.error("Error al incrustar logotipo en PDF:", logoErr);
+1565:       doc.setFillColor(goldR,goldG,goldB);
+1566:       doc.circle(sealCx, sealCy, sealR, 'F');
+1567:       doc.setFont('helvetica','bold');
+1568:       doc.setFontSize(10);
+1569:       doc.setTextColor(255,255,255);
+1570:       doc.text(initials($('f-artista').value || 'AR'), sealCx, sealCy + 0.04, { align:'center' });
+1571:     }
+1572:   } else {
+1573:     doc.setFillColor(goldR,goldG,goldB);
+1574:     doc.circle(sealCx, sealCy, sealR, 'F');
+1575:     doc.setFont('helvetica','bold');
+1576:     doc.setFontSize(10);
+1577:     doc.setTextColor(255,255,255);
+1578:     doc.text(initials($('f-artista').value || 'AR'), sealCx, sealCy + 0.04, { align:'center' });
+1579:   }
+1580: 
+1581:   // QR Code de Verificación en PDF (Centrado en el pie)
+1582:   try {
+1583:     const qrImg = $('p-qr').querySelector('img');
+1584:     if (qrImg) {
+1585:       doc.addImage(qrImg, 'PNG', rightX + 1.15, footerY - 0.05, 0.46, 0.46);
+1586:     }
+1587:   } catch (qrErr) {
+1588:     console.error("Error al incrustar el código QR en el PDF:", qrErr);
+1589:   }
+1590: 
+1591:   // Código y Ciudad/Fecha
+1592:   doc.setFont('helvetica','bold');
+1593:   doc.setFontSize(11);
+1594:   doc.setTextColor(goldR,goldG,goldB);
+1595:   doc.text(certCode, rightX + rightW, footerY + 0.08, { align:'right', charSpace:0.03 });
+1596:   
+1597:   doc.setFont('helvetica','normal');
+1598:   doc.setFontSize(9);
+1599:   doc.setTextColor(dimR,dimG,dimB);
+1600:   const place = [$('f-ciudad').value, formatDate($('f-fecha').value)].filter(Boolean).join(' · ');
+1601:   doc.text(place, rightX + rightW, footerY + 0.22, { align:'right' });
+1602: 
+1603:   const safeTitle = (titulo || 'certificado').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+1604:   doc.save(`certificado-${safeTitle || 'obra'}.pdf`);
+1605: });
+1606: 
+1607: // --- DETECTOR DEL MODO COMPRADOR (VISOR PÚBLICO) ---
+1608: async function checkBuyerMode() {
+1609:   const params = new URLSearchParams(window.location.search);
+1610:   const code = params.get('code');
+1611:   if (!code) return; // Si no hay parámetro, es el panel administrador normal
+1612:   
+1613:   console.log("Visualización de Comprador Activada. Código:", code);
+1614:   
+1615:   // Ocultar elementos del administrador
+1616:   if ($('btn-settings')) $('btn-settings').style.display = 'none';
+1617:   const segmented = document.querySelector('.segmented');
+1618:   if (segmented) segmented.style.display = 'none';
+1619:   
+1620:   const hero = document.querySelector('header.hero');
+1621:   if (hero) hero.style.display = 'none';
+1622:   
+1623:   const panel = document.querySelector('.panel');
+1624:   if (panel) panel.style.display = 'none';
+1625:   
+1626:   const grid = document.querySelector('.grid');
+1627:   if (grid) {
+1628:     grid.style.gridTemplateColumns = '1fr';
+1629:     grid.style.justifyContent = 'center';
+1630:   }
+1631:   
+1632:   if ($('btn-save')) $('btn-save').style.display = 'none';
+1633:   if ($('btn-regen')) $('btn-regen').style.display = 'none';
+1634:   if ($('save-status')) $('save-status').style.display = 'none';
+1635:   
+1636:   // Crear Banner de Certificación
+1637:   const mainEl = document.querySelector('main');
+1638:   const banner = document.createElement('div');
+1639:   banner.className = 'buyer-banner';
+1640:   banner.innerHTML = `
+1641:     <div style="display:flex; align-items:center; justify-content:center; gap:12px; max-width:400px; margin:0 auto; text-align:left;">
+1642:       <i class="fa-solid fa-circle-check" style="color:var(--gold); font-size:24px;"></i>
+1643:       <div>
+1644:         <h4 style="margin:0; font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink);">Certificado de Autenticidad Validado</h4>
+1645:         <p style="margin:2px 0 0; font-size:11px; color:var(--text-dim); line-height:1.35;">Este documento digital confirma el registro y procedencia de la obra de arte original de Rosymer Martínez.</p>
+1646:       </div>
+1647:     </div>
+1648:   `;
+1649:   banner.setAttribute('style', `
+1650:     margin-bottom: 24px;
+1651:     padding: 16px 20px;
+1652:     background: rgba(184,151,90,0.06);
+1653:     border: 1px dashed rgba(184,151,90,0.3);
+1654:     border-radius: 16px;
+1655:   `);
+1656:   mainEl.insertBefore(banner, mainEl.firstChild);
+1657:   
+1658:   const statusBanner = document.createElement('div');
+1659:   statusBanner.id = 'buyer-loading-status';
+1660:   statusBanner.innerHTML = 'Verificando firma del certificado...';
+1661:   statusBanner.setAttribute('style', 'font-size:12px; color:var(--text-dim); text-align:center; margin-bottom:16px; font-weight:600;');
+1662:   mainEl.insertBefore(statusBanner, banner.nextSibling);
+1663:   
+1664:   // Si no hay Supabase aún configurado, probar localmente
+1665:   if (!supabase) {
+1666:     const key = 'cert:' + code;
+1667:     try {
+1668:       const res = await window.storage.get(key, false);
+1669:       if (res && res.value) {
+1670:         const localData = JSON.parse(res.value);
+1671:         fillForm(localData);
+1672:         statusBanner.innerHTML = '<span style="color:var(--gold); font-weight:bold;">[Modo local] Certificado verificado desde la base de datos local.</span>';
+1673:         return;
+1674:       }
+1675:     } catch(e) {}
+1676:     statusBanner.innerHTML = '<span style="color:var(--danger);">Base de datos Supabase ausente. Conéctala para verificar firmas online.</span>';
+1677:     return;
+1678:   }
+1679:   
+1680:   try {
+1681:     statusBanner.innerHTML = 'Consultando registros en la nube de Supabase...';
+1682:     const { data, error } = await supabase
+1683:       .from('certificates')
+1684:       .select('*')
+1685:       .eq('code', code)
+1686:       .single();
+1687:       
+1688:     if (error || !data) {
+1689:       statusBanner.innerHTML = '<span style="color:var(--danger); font-weight:bold;">✘ Error de verificación: Código no registrado en la base de datos oficial.</span>';
+1690:       return;
+1691:     }
+1692:     
+1693:     statusBanner.innerHTML = '<span style="color:var(--aqua-deep); font-weight:bold;">✓ Sincronización oficial: Firmado digitalmente de forma correcta.</span>';
+1694:     
+1695:     // Rellenar certificado
+1696:     const parsedData = {
+1697:       code: data.code,
+1698:       titulo: data.titulo,
+1699:       epigrafe: data.epigrafe,
+1700:       artista: data.artista,
+1701:       anio: data.anio,
+1702:       tecnica: data.tecnica,
+1703:       dimensiones: data.dimensiones,
+1704:       categoria: data.categoria,
+1705:       soporte: data.soporte,
+1706:       ciudad: data.ciudad,
+1707:       fecha: data.fecha,
+1708:       photos: [data.photo_1 || '', data.photo_2 || '', data.photo_3 || ''],
+1709:       logo: data.logo || ''
+1710:     };
+1711:     
+1712:     fillForm(parsedData);
+1713:   } catch(err) {
+1714:     statusBanner.innerHTML = `<span style="color:var(--danger);">Error al contactar Supabase: ${err.message}</span>`;
+1715:   }
+1716: }
+1717: 
+1718: // --- DETECCION E INSTALACION DE PWA (POPUP INSTALADOR) ---
+1719: let deferredPrompt = null;
+1720: const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+1721: 
+1722: function initPWAInstallation() {
+1723:   const ua = navigator.userAgent.toLowerCase();
+1724:   const isiOS = /iphone|ipad|ipod/.test(ua);
+1725:   
+1726:   // Establecer logotipo del prompt
+1727:   const iconBox = $('pwa-prompt-icon');
+1728:   if (iconBox) {
+1729:     if (logoBase64) {
+1730:       iconBox.innerHTML = `<img src="${logoBase64}" style="width:100%; height:100%; object-fit:contain;" alt="Logo App">`;
+1731:     } else {
+1732:       iconBox.innerHTML = `<i class="fa-solid fa-signature" style="color:var(--gold); font-size:18px;"></i>`;
+1733:     }
+1734:   }
+1735: 
+1736:   // Capturar evento de instalación en Android / Chrome
+1737:   window.addEventListener('beforeinstallprompt', (e) => {
+1738:     e.preventDefault();
+1739:     deferredPrompt = e;
+1740:     
+1741:     // Si no está instalada, mostramos el aviso
+1742:     if (!isStandalone) {
+1743:       const promptEl = $('pwa-install-prompt');
+1744:       if (promptEl) {
+1745:         promptEl.style.display = 'block';
+1746:         $('pwa-trigger-area').innerHTML = `
+1747:           <button class="pwa-btn-install" onclick="triggerAndroidInstall()"><i class="fa-solid fa-download"></i> Instalar en dispositivo</button>
+1748:         `;
+1749:       }
+1750:     }
+1751:   });
+1752: 
+1753:   // Mostrar mensaje personalizado para celulares iOS (Apple) si no están en Standalone
+1754:   if (isiOS && !isStandalone) {
+1755:     const promptEl = $('pwa-install-prompt');
+1756:     if (promptEl) {
+1757:       promptEl.style.display = 'block';
+1758:       $('pwa-trigger-area').innerHTML = `
+1759:         <div class="ios-instruction-box">
+1760:           <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-apple"></i> Para descargar en tu iPhone/iPad:</span>
+1761:           <ol>
+1762:             <li>Presiona el botón de <strong>Compartir</strong> <i class="fa-solid fa-share-from-square" style="color:var(--aqua-deep);"></i> en el menú de Safari.</li>
+1763:             <li>Selecciona la opción <strong>"Agregar a pantalla de inicio"</strong> <i class="fa-regular fa-square-plus" style="color:var(--aqua-deep);"></i>.</li>
+1764:           </ol>
+1765:         </div>
+1766:       `;
+1767:     }
+1768:   }
+1769: }
+1770: 
+1771: async function triggerAndroidInstall() {
+1772:   if (deferredPrompt) {
+1773:     deferredPrompt.prompt();
+1774:     const { outcome } = await deferredPrompt.userChoice;
+1775:     console.log(`PWA install choice: ${outcome}`);
+1776:     deferredPrompt = null;
+1777:     dismissInstallPrompt();
+1778:   }
+1779: }
+1780: 
+1781: function dismissInstallPrompt() {
+1782:   const promptEl = $('pwa-install-prompt');
+1783:   if (promptEl) promptEl.style.display = 'none';
+1784: }
+1785: 
+1786: // Registro del Service Worker para PWA
+1787: if ('serviceWorker' in navigator) {
+1788:   window.addEventListener('load', () => {
+1789:     navigator.serviceWorker.register('./sw.js')
+1790:       .then(reg => console.log('PWA Service Worker registrado con éxito:', reg))
+1791:       .catch(err => console.error('Error registrando Service Worker PWA:', err));
+1792:   });
+1793: }
+1794: 
+1795: // Ejecutar init al cargar
+1796: document.addEventListener('DOMContentLoaded', () => {
+1797:   checkBuyerMode();
+1798:   initPWAInstallation();
+1799: });
+1800: if (document.readyState === 'interactive' || document.readyState === 'complete') {
+1801:   checkBuyerMode();
+1802:   initPWAInstallation();
+1803: }
+1804: </script>
+1805: </body>
+1806: </html>
