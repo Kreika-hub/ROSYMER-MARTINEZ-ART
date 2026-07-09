@@ -2030,8 +2030,8 @@ async function triggerAndroidInstall() {
     deferredPrompt = null;
     dismissInstallPrompt();
   } else {
-    // Si Chrome bloquea la instalación mágica por motivos de caché o seguridad, le decimos amablemente qué picar:
-    alert("Para instalarla directo al celular: Toca los 3 puntitos de opciones de Chrome arriba a la derecha y selecciona 'Instalar aplicación' o 'Agregar a la pantalla principal'.");
+    // Si Chrome retiene el permiso (frecuente para web-developers probando su propia app), se aborta silenciosamente.
+    dismissInstallPrompt();
   }
 }
 
