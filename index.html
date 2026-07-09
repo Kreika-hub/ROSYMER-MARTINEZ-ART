@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Certificados de Autenticidad</title>
+<title>Certificates of Authenticity</title>
 <!-- PWA & iOS Optimization -->
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -500,8 +500,8 @@
 <div class="navbar">
   <div class="navbar-inner">
     <div>
-      <h1 id="nav-title">Certificados</h1>
-      <div class="sub" id="nav-sub">Kreika · Autenticidad de obras</div>
+      <h1 id="nav-title">Certificates</h1>
+      <div class="sub" id="nav-sub">Kreika · Artwork Authenticity</div>
     </div>
       <div id="lang-switcher" style="display:flex; align-items:center; gap:6px; margin-right:8px; font-weight:600;">
         <button id="btn-lang-es" onclick="setLang('es')" style="background:none; border:none; color:var(--ink); font-size:13px; cursor:pointer;">ES</button>
@@ -509,8 +509,8 @@
         <button id="btn-lang-en" onclick="setLang('en')" style="background:none; border:none; color:var(--ink); font-size:13px; cursor:pointer; opacity:0.5;">EN</button>
       </div>
       <div class="segmented">
-        <button class="active" data-view="nuevo" id="tab-nuevo">Nuevo</button>
-        <button data-view="gallery" id="tab-gallery">Galería</button>
+        <button class="active" data-view="nuevo" id="tab-nuevo">New</button>
+        <button data-view="gallery" id="tab-gallery">Gallery</button>
       </div>
       <button id="btn-settings" type="button" style="display:none; background:transparent; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:6px;" title="Configuración de Supabase"><i class="fa-solid fa-gear"></i></button>
     </div>
@@ -522,56 +522,56 @@
 
     <div id="view-nuevo">
       <header class="hero">
-        <div class="eyebrow" id="hdr-eyebrow">Nuevo certificado</div>
-        <h2 id="hdr-title">Datos de la obra</h2>
-        <p id="hdr-desc">Completa los campos y descarga el certificado en PDF (7 × 5 in horizontal), o guárdalo en tu galería local.</p>
+        <div class="eyebrow" id="hdr-eyebrow">New Certificate</div>
+        <h2 id="hdr-title">Artwork Details</h2>
+        <p id="hdr-desc">Fill in the fields and download the PDF certificate (7 × 5 in horizontal), or save it to your local gallery.</p>
       </header>
 
       <div class="grid">
         <div class="panel">
-          <h3 id="panel-info">Información</h3>
+          <h3 id="panel-info">Information</h3>
 
-          <label id="lbl-titulo" class="first">Título de la obra</label>
-          <input id="f-titulo" type="text" placeholder="Ej. Karichuana: Mujer del Viento" value="">
+          <label id="lbl-titulo" class="first">Title of the work</label>
+          <input id="f-titulo" type="text" placeholder="" value="">
 
-          <label id="lbl-epigrafe">Epígrafe / subtítulo poético</label>
-          <input id="f-epigrafe" type="text" placeholder="Ej. La Mirada que Abrió el Espacio" value="">
+          <label id="lbl-epigrafe">Epigraph / poetic subtitle</label>
+          <input id="f-epigrafe" type="text" placeholder="" value="">
 
-          <label id="lbl-artista">Artista</label>
+          <label id="lbl-artista">Artist</label>
           <input id="f-artista" type="text" value="ROSYMER MARTINEZ" readonly style="background: rgba(20,60,55,0.05); color: var(--text-dim); border-color: transparent; pointer-events:none;">
 
           <div class="row2">
             <div>
-              <label id="lbl-anio">Año</label>
-              <input id="f-anio" type="text" placeholder="Ej. 2026" value="">
+              <label id="lbl-anio">Year</label>
+              <input id="f-anio" type="text" placeholder="e.g. 2026" value="">
             </div>
             <div>
-              <label id="lbl-tecnica">Técnica</label>
-              <input id="f-tecnica" type="text" placeholder="Ej. Acrílico sobre lienzo" value="">
+              <label id="lbl-tecnica">Medium</label>
+              <input id="f-tecnica" type="text" placeholder="e.g. Acrylic on Canvas" value="">
             </div>
           </div>
 
           <div class="row2">
             <div>
-              <label id="lbl-dimensiones">Dimensiones</label>
-              <input id="f-dimensiones" type="text" placeholder="Ej. 100 x 120 cm" list="dimensions-list" value="">
+              <label id="lbl-dimensiones">Dimensions</label>
+              <input id="f-dimensiones" type="text" placeholder="e.g. 100 x 120 cm" list="dimensions-list" value="">
             </div>
             <div>
-              <label id="lbl-categoria">Categoría</label>
-              <input id="f-categoria" type="text" placeholder="Ej. Pintura" value="">
+              <label id="lbl-categoria">Category</label>
+              <input id="f-categoria" type="text" placeholder="e.g. Painting" value="">
             </div>
           </div>
 
-          <label id="lbl-soporte">Soporte</label>
-          <input id="f-soporte" type="text" placeholder="Ej. Lienzo" value="">
+          <label id="lbl-soporte">Support</label>
+          <input id="f-soporte" type="text" placeholder="e.g. Canvas" value="">
 
           <div class="row2">
             <div>
-              <label id="lbl-ciudad">Ciudad de emisión</label>
-              <input id="f-ciudad" type="text" placeholder="Ej. Caracas, Venezuela" list="cities-list" value="">
+              <label id="lbl-ciudad">City of issue</label>
+              <input id="f-ciudad" type="text" placeholder="e.g. Caracas, Venezuela" list="cities-list" value="">
             </div>
             <div>
-              <label id="lbl-fecha">Fecha de emisión</label>
+              <label id="lbl-fecha">Date of issue</label>
               <input id="f-fecha" type="date">
             </div>
           </div>
@@ -582,12 +582,12 @@
           <datalist id="cities-list"></datalist>
 
           <!-- Fotos del Carrusel -->
-          <label id="lbl-fotos">Fotos de la Obra (Máx. 3)</label>
+          <label id="lbl-fotos">Artwork Photos (Max 3)</label>
           <div class="photo-uploader-grid">
             <!-- Slot 1 (Principal) -->
             <div class="photo-slot" id="slot-1">
               <div class="photo-preview-box" onclick="triggerUpload(1)">
-                <span class="placeholder-text"><i class="fa-solid fa-image"></i><br><span id="ph-main">Principal</span></span>
+                <span class="placeholder-text"><i class="fa-solid fa-image"></i><br><span id="ph-main">Main</span></span>
                 <img id="img-preview-1" style="display:none;">
               </div>
               <div class="photo-actions">
@@ -794,8 +794,8 @@
   <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
     <div id="pwa-prompt-icon" style="width:44px; height:44px; min-width:44px; border-radius:12px; background:#fff; box-shadow:0 3px 8px rgba(0,0,0,0.08); border:1px solid #eceff1; display:flex; align-items:center; justify-content:center; overflow:hidden;"></div>
     <div style="flex:1;">
-      <h4 style="margin:0; font-size:13px; font-weight:800; color:var(--ink);">Descargar App</h4>
-      <p style="margin:2px 0 0; font-size:10.5px; color:var(--text-dim); line-height:1.25;">Instala el Generador de Certificados de Autenticidad en la pantalla de tu móvil.</p>
+      <h4 style="margin:0; font-size:13px; font-weight:800; color:var(--ink);">Download App</h4>
+      <p style="margin:2px 0 0; font-size:10.5px; color:var(--text-dim); line-height:1.25;">Install the Authenticity Certificate Generator on your mobile screen.</p>
     </div>
     <button onclick="dismissInstallPrompt()" style="background:none; border:none; font-size:20px; color:var(--text-dim); cursor:pointer; padding:4px; font-weight:bold; line-height:1;">&times;</button>
   </div>
