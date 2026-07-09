@@ -1126,8 +1126,8 @@ function updatePreview() {
     certCode = editingId;
   }
 
-  $('cert-code-display').textContent = certCode || '—';
-  $('p-code').textContent = certCode || '—';
+  if ($('cert-code-display')) $('cert-code-display').textContent = certCode || '—';
+  if ($('p-code')) $('p-code').textContent = certCode || '—';
 
   // Llenar vista previa
   $('p-titulo').textContent = $('f-titulo').value.trim() || '—';
