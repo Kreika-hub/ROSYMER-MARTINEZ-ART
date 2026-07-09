@@ -1105,15 +1105,27 @@ $('btn-pdf').addEventListener('click', () => {
   const midX = rightX + rightW/2;
   
   let y = 0.70;
+  
+  // Helper para dibujar texto auto-ajustable
+  const drawTitleText = (text, defaultSize, defaultSpace, color) => {
+    let size = defaultSize;
+    let space = defaultSpace;
+    doc.setFontSize(size);
+    let tw = doc.getTextWidth(text) + (text.length * space); 
+    if (tw > rightW - 0.2) {
+      size = size * 0.85;
+      space = space * 0.5;
+      doc.setFontSize(size);
+    }
+    doc.setTextColor.apply(doc, color);
+    doc.text(text, midX, y, { align: 'center', charSpace: space });
+  };
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10.5);
-  doc.setTextColor(goldR, goldG, goldB);
-  doc.text('CERTIFICADO DE', midX, y, { align: 'center', charSpace: 0.06 });
+  drawTitleText('CERTIFICADO DE', 10.5, 0.06, [goldR, goldG, goldB]);
   
   y += 0.22;
-  doc.setFontSize(17);
-  doc.setTextColor(inkR, inkG, inkB);
-  doc.text('AUTENTICIDAD', midX, y, { align: 'center', charSpace: 0.08 });
+  drawTitleText('AUTENTICIDAD', 17, 0.08, [inkR, inkG, inkB]);
 
   y += 0.08;
   doc.setDrawColor(goldR, goldG, goldB);
@@ -1171,44 +1183,49 @@ $('btn-pdf').addEventListener('click', () => {
     doc.text(valLines, x, rowY + 0.14);
   });
 
-  const footerY = H - 0.70;
+  const footerY = H - 1.15; // Elevado para dar espacio a todas las filas
   
   // Línea divisoria del pie
   doc.setDrawColor(goldR, goldG, goldB);
   doc.setLineWidth(0.006);
   doc.line(rightX, footerY - 0.10, rightX + rightW, footerY - 0.10);
 
-  // Logo de Rosymer sin círculo (abajo a la izquierda del pie de firma)
-  const logoImg = $('corporate-logo-img');
-  if (logoImg && logoImg.naturalWidth) {
-    try {
-      doc.addImage(logoImg, 'PNG', rightX, footerY, 0.8, 0.4);
-    } catch (logoErr) {
-      console.error("Error al incrustar logotipo en PDF:", logoErr);
-    }
-  }
-
-  // QR Code de Verificación en PDF (Tamaño moderadamente grande, ideal para impresión)
-  try {
-    const qrImg = $('p-qr').querySelector('img');
-    if (qrImg) {
-      doc.addImage(qrImg, 'PNG', rightX + 0.95, footerY - 0.25, 0.85, 0.85);
-    }
-  } catch (qrErr) {
-    console.error("Error al incrustar el código QR en el PDF:", qrErr);
-  }
-
-  // Código y Ciudad/Fecha
+  // --- FILA 1: Código de Autenticidad ---
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(goldR, goldG, goldB);
   doc.text(certCode, rightX + rightW, footerY + 0.08, { align: 'right', charSpace: 0.03 });
   
+  // --- FILA 2: Ciudad y Fecha ---
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(dimR, dimG, dimB);
   const place = [$('f-ciudad').value, formatDate($('f-fecha').value)].filter(Boolean).join(' · ');
   doc.text(place, rightX + rightW, footerY + 0.22, { align: 'right' });
+
+  // --- FILA 3: Logo a la izquierda y QR a la derecha ---
+  const row3Y = footerY + 0.40;
+  
+  // Logo
+  const logoImg = $('corporate-logo-img');
+  if (logoImg && logoImg.naturalWidth) {
+    try {
+      doc.addImage(logoImg, 'PNG', rightX + 0.1, row3Y + 0.2, 0.8, 0.4);
+    } catch (logoErr) {
+      console.error("Error al incrustar logotipo en PDF:", logoErr);
+    }
+  }
+
+  // QR Code
+  try {
+    const qrImg = $('p-qr').querySelector('img');
+    if (qrImg) {
+      // Posicionado en el lado derecho puro, dejando margen seguro
+      doc.addImage(qrImg, 'PNG', rightX + 1.8, row3Y, 0.85, 0.85); 
+    }
+  } catch (qrErr) {
+    console.error("Error QR PDF:", qrErr);
+  }
 
   const safeTitle = (titulo || 'certificado').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   doc.save(`certificado-${safeTitle || 'obra'}.pdf`);
