@@ -68,6 +68,31 @@
   }
   .segmented button.active{ background:var(--white); color:var(--ink); box-shadow:0 2px 8px var(--shadow); }
 
+  /* --- CUSTOM DIALOG --- */
+  .app-dialog-overlay {
+    position: fixed; inset: 0; background: rgba(11,46,43,0.35); backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px); z-index: 99999; display: flex;
+    align-items: center; justify-content: center; padding: 20px;
+    animation: fadeInOverlay 0.2s ease;
+  }
+  @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+  .app-dialog {
+    background: rgba(255,255,255,0.97); border-radius: 22px; padding: 28px 24px 20px;
+    max-width: 340px; width: 100%; box-shadow: 0 24px 60px rgba(11,46,43,0.18);
+    border: 1px solid rgba(255,255,255,0.9);
+    animation: slideUpDialog 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideUpDialog { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  .app-dialog .d-icon { font-size: 28px; margin-bottom: 12px; text-align: center; }
+  .app-dialog .d-title { font-size: 15px; font-weight: 800; color: var(--ink); margin-bottom: 6px; text-align: center; }
+  .app-dialog .d-msg { font-size: 13px; color: var(--text-dim); line-height: 1.5; text-align: center; margin-bottom: 20px; }
+  .app-dialog .d-actions { display: flex; gap: 10px; }
+  .app-dialog .d-btn { flex: 1; padding: 12px; border-radius: 13px; border: none; font-family: 'Montserrat'; font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity 0.15s; }
+  .app-dialog .d-btn:hover { opacity: 0.85; }
+  .app-dialog .d-btn-cancel { background: rgba(20,60,55,0.07); color: var(--ink); }
+  .app-dialog .d-btn-confirm { background: linear-gradient(135deg, var(--danger) 0%, #c0392b 100%); color: #fff; }
+  .app-dialog .d-btn-ok { background: linear-gradient(135deg, var(--aqua) 0%, var(--aqua-deep) 100%); color: #fff; }
+
   .lang-pill {
     position: relative; width: 68px; height: 32px; background: rgba(20,60,55,0.08);
     border-radius: 16px; display: flex; align-items: center; justify-content: space-between;
@@ -810,6 +835,16 @@
   </div>
 </div>
 
+<!-- Custom App Dialog -->
+<div id="app-dialog-overlay" class="app-dialog-overlay" style="display:none;">
+  <div class="app-dialog">
+    <div class="d-icon" id="d-icon">🗑️</div>
+    <div class="d-title" id="d-title"></div>
+    <div class="d-msg" id="d-msg"></div>
+    <div class="d-actions" id="d-actions"></div>
+  </div>
+</div>
+
 <!-- Popup Flotante de Descarga de PWA -->
 <div id="pwa-install-prompt" class="pwa-prompt" style="display:none;">
   <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
@@ -1068,6 +1103,39 @@ function formatDate(dateStr) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
+// --- SISTEMA DE DIALOGOS NATIVOS DE LA APP ---
+function showAlert(msg, icon = 'ℹ️', title = '') {
+  return new Promise(resolve => {
+    const overlay = $('app-dialog-overlay');
+    $('d-icon').textContent = icon;
+    $('d-title').textContent = title;
+    $('d-msg').textContent = msg;
+    $('d-actions').innerHTML = `
+      <button class="d-btn d-btn-ok" id="d-ok-btn">OK</button>
+    `;
+    overlay.style.display = 'flex';
+    $('d-ok-btn').onclick = () => { overlay.style.display = 'none'; resolve(); };
+  });
+}
+
+function showConfirm(msg, icon = '⚠️', title = '') {
+  return new Promise(resolve => {
+    const overlay = $('app-dialog-overlay');
+    $('d-icon').textContent = icon;
+    $('d-title').textContent = title;
+    $('d-msg').textContent = msg;
+    const cancelTxt = currentLang === 'es' ? 'Cancelar' : 'Cancel';
+    const confirmTxt = currentLang === 'es' ? 'Eliminar' : 'Delete';
+    $('d-actions').innerHTML = `
+      <button class="d-btn d-btn-cancel" id="d-cancel-btn">${cancelTxt}</button>
+      <button class="d-btn d-btn-confirm" id="d-confirm-btn">${confirmTxt}</button>
+    `;
+    overlay.style.display = 'flex';
+    $('d-cancel-btn').onclick = () => { overlay.style.display = 'none'; resolve(false); };
+    $('d-confirm-btn').onclick = () => { overlay.style.display = 'none'; resolve(true); };
+  });
+}
+
 // Hashing para código único de obra
 function hashCode(str) {
   let hash = 0;
@@ -1208,7 +1276,13 @@ function updatePreview() {
 // --- GENERADOR DE PDF ---
 async function generarPDF(certData) {
   if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-    alert("La librería creadora de PDFs no ha podido cargar por problemas de red. Conéctate e inténtalo de nuevo.");
+    await showAlert(
+      currentLang === 'es'
+        ? 'La librería de PDF no ha podido cargar. Conéctate e intenta de nuevo.'
+        : 'The PDF library could not load. Connect to the internet and try again.',
+      '📵',
+      currentLang === 'es' ? 'Sin conexión' : 'No connection'
+    );
     return;
   }
   const { jsPDF } = window.jspdf;
@@ -1736,18 +1810,30 @@ async function loadGallery() {
       });
       card.querySelector('.del').addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (confirm(currentLang === 'es' ? '¿Seguro que deseas eliminar este certificado permanentemente de la base de datos?' : 'Are you sure you want to permanently delete this certificate from the database?')) {
+        const confirmed = await showConfirm(
+          currentLang === 'es'
+            ? '¿Eliminar este certificado permanentemente de la base de datos?'
+            : 'Delete this certificate permanently from the database?',
+          '🗑️',
+          currentLang === 'es' ? 'Confirmar eliminación' : 'Confirm deletion'
+        );
+        if (confirmed) {
           try {
             const { error: delError } = await supaClient.from('certificates').delete().eq('code', data.code);
             if (delError) {
               console.error(delError);
-              alert('Error procesando eliminación en la nube.');
+              await showAlert(
+                currentLang === 'es' ? 'Error al eliminar en la nube: ' + delError.message : 'Error deleting from cloud: ' + delError.message,
+                '❌',
+                'Error'
+              );
             } else {
-              window.storage.delete('cert:' + data.code, false); // Limpiar cache basurilla
+              try { localStorage.removeItem('cert:' + data.code); } catch(e) {}
               loadGallery();
             }
           } catch (err) {
             console.error(err);
+            await showAlert(err.message || 'Unknown error', '❌', 'Error');
           }
         }
       });
@@ -1791,8 +1877,14 @@ function openCropModal(imageSrc) {
   setTimeout(() => {
     try {
       if (typeof Cropper === 'undefined') {
-         alert("No se pudo cargar el editor de recorte inteligente. Tu foto se guardará sin recorte (en su formato original).");
-         return;
+        await showAlert(
+          currentLang === 'es'
+            ? 'Editor de recorte no disponible. La foto se guardará sin recortar.'
+            : 'Crop editor not available. Photo will be saved as-is.',
+          '✏️',
+          currentLang === 'es' ? 'Sin editor' : 'No editor'
+        );
+        return;
       }
       cropperInstance = new Cropper(cropImg, {
         aspectRatio: NaN,
@@ -1803,7 +1895,10 @@ function openCropModal(imageSrc) {
       });
     } catch (err) {
        console.error("Error inicializando Cropper:", err);
-       alert("No se pudo cargar el editor de recorte. Tu foto se guardará sin recorte.");
+       await showAlert(
+         currentLang === 'es' ? 'No se pudo cargar el editor de recorte.' : 'Could not load the crop editor.',
+         '✏️', 'Error'
+       );
     }
   }, 100);
 }
@@ -1907,7 +2002,10 @@ async function triggerCamera(idx) {
     $('camera-video').srcObject = mediaStream;
   } catch(err) {
     console.error("Error al acceder a la cámara:", err);
-    alert("No se pudo iniciar la cámara en este dispositivo.");
+    await showAlert(
+      currentLang === 'es' ? 'No se pudo iniciar la cámara en este dispositivo.' : 'Could not start the camera on this device.',
+      '📷', currentLang === 'es' ? 'Cámara no disponible' : 'Camera unavailable'
+    );
     closeCameraModal();
   }
 }
