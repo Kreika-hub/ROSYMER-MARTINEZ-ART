@@ -1996,10 +1996,8 @@ function initPWAInstallation() {
 
   // Forzamos que siempre aparezca el modal para pantallas móviles si no está instalada la PWA.
   if (!isStandalone && isMobile && promptEl) {
-    promptEl.style.display = 'block';
-    
-    // Fallback nativo: Si el dispositivo es iOS, o si en Android Chrome demora en disparar el evento
     if (isiOS) {
+      promptEl.style.display = 'block';
       $('pwa-trigger-area').innerHTML = `
         <div class="ios-instruction-box">
           <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-apple"></i> Descargar directo en iPhone:</span>
@@ -2010,24 +2008,21 @@ function initPWAInstallation() {
         </div>
       `;
     } else {
-      $('pwa-trigger-area').innerHTML = `
-        <div class="ios-instruction-box">
-          <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-android"></i> Descargar directo en Android:</span>
-          <p style="margin:4px 0 0;">Usa el menú de 3 puntos de Chrome <i class="fa-solid fa-ellipsis-vertical" style="color:var(--aqua-deep);"></i> y presiona <strong>"Instalar aplicación"</strong>.</p>
-        </div>
-      `;
+      // En Android esperamos a que el OS emita el evento canónico para mostrar el popup
+      promptEl.style.display = 'none';
+      $('pwa-trigger-area').innerHTML = '';
     }
   }
 
-  // Capturar evento de instalación nativa PWA en Android (El Botón Verde Directo)
+  // Capturar evento de instalación nativa PWA en Android (Botón Automático)
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     
     if (!isStandalone && promptEl) {
-      promptEl.style.display = 'block'; // Volver a asegurar que se muestre
+      promptEl.style.display = 'block'; 
       $('pwa-trigger-area').innerHTML = `
-        <button class="pwa-btn-install" onclick="triggerAndroidInstall()"><i class="fa-solid fa-download"></i> Descargar App al Celular</button>
+        <button class="pwa-btn-install" style="font-size: 1.1rem; padding: 12px 24px;" onclick="triggerAndroidInstall()"><i class="fa-solid fa-download"></i> Descargar</button>
       `;
     }
   });
