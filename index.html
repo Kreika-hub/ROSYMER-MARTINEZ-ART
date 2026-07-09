@@ -1748,8 +1748,7 @@ async function loadGallery() {
   try {
     const { data: dbItems, error } = await supaClient
       .from('certificates')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
 
     if (error) throw error;
     
@@ -1837,7 +1836,7 @@ async function loadGallery() {
             } else {
               console.log('Eliminado correctamente.');
               try { localStorage.removeItem('cert:' + data.code); } catch(e2) {}
-              loadGallery();
+              await loadGallery();
             }
           } catch (err) {
             console.error('Excepción en delete:', err);
