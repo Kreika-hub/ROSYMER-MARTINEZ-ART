@@ -508,7 +508,11 @@
       <h1>Certificados</h1>
       <div class="sub">Kreika · Autenticidad de obras</div>
     </div>
-    <div style="display:flex; align-items:center; gap:12px;">
+      <div id="lang-switcher" style="display:flex; align-items:center; gap:6px; margin-right:8px; font-weight:600;">
+        <button id="btn-lang-es" onclick="setLang('es')" style="background:none; border:none; color:var(--ink); font-size:13px; cursor:pointer;">ES</button>
+        <span style="color:var(--gold); font-size:12px;">|</span>
+        <button id="btn-lang-en" onclick="setLang('en')" style="background:none; border:none; color:var(--ink); font-size:13px; cursor:pointer; opacity:0.5;">EN</button>
+      </div>
       <div class="segmented">
         <button class="active" data-view="nuevo">Nuevo</button>
         <button data-view="gallery">Galería</button>
@@ -532,47 +536,47 @@
         <div class="panel">
           <h3>Información</h3>
 
-          <label class="first">Título de la obra</label>
+          <label id="lbl-titulo" class="first">Título de la obra</label>
           <input id="f-titulo" type="text" placeholder="Ej. Karichuana: Mujer del Viento" value="">
 
-          <label>Epígrafe / subtítulo poético</label>
+          <label id="lbl-epigrafe">Epígrafe / subtítulo poético</label>
           <input id="f-epigrafe" type="text" placeholder="Ej. La Mirada que Abrió el Espacio" value="">
 
-          <label>Artista</label>
+          <label id="lbl-artista">Artista</label>
           <input id="f-artista" type="text" value="ROSYMER MARTINEZ" readonly style="background: rgba(20,60,55,0.05); color: var(--text-dim); border-color: transparent; pointer-events:none;">
 
           <div class="row2">
             <div>
-              <label>Año</label>
+              <label id="lbl-anio">Año</label>
               <input id="f-anio" type="text" placeholder="Ej. 2026" value="">
             </div>
             <div>
-              <label>Técnica</label>
+              <label id="lbl-tecnica">Técnica</label>
               <input id="f-tecnica" type="text" placeholder="Ej. Acrílico sobre lienzo" value="">
             </div>
           </div>
 
           <div class="row2">
             <div>
-              <label>Dimensiones</label>
+              <label id="lbl-dimensiones">Dimensiones</label>
               <input id="f-dimensiones" type="text" placeholder="Ej. 100 x 120 cm" list="dimensions-list" value="">
             </div>
             <div>
-              <label>Categoría</label>
+              <label id="lbl-categoria">Categoría</label>
               <input id="f-categoria" type="text" placeholder="Ej. Pintura" value="">
             </div>
           </div>
 
-          <label>Soporte</label>
+          <label id="lbl-soporte">Soporte</label>
           <input id="f-soporte" type="text" placeholder="Ej. Lienzo" value="">
 
           <div class="row2">
             <div>
-              <label>Ciudad de emisión</label>
+              <label id="lbl-ciudad">Ciudad de emisión</label>
               <input id="f-ciudad" type="text" placeholder="Ej. Caracas, Venezuela" list="cities-list" value="">
             </div>
             <div>
-              <label>Fecha de emisión</label>
+              <label id="lbl-fecha">Fecha de emisión</label>
               <input id="f-fecha" type="date">
             </div>
           </div>
@@ -815,6 +819,108 @@ window.storage = {
     return { keys };
   }
 };
+
+// --- GLOBAL STATE ---
+let isBuyerView = false;
+let currentLang = localStorage.getItem('app_lang') || 'es';
+
+const i18n = {
+  es: {
+    lbl_title: "Título de la obra",
+    lbl_epigraph: "Epígrafe / subtítulo poético",
+    lbl_artist: "Artista",
+    lbl_year: "Año",
+    lbl_technique: "Técnica",
+    lbl_dimensions: "Dimensiones",
+    lbl_category: "Categoría",
+    lbl_support: "Soporte",
+    lbl_city: "Ciudad de emisión",
+    lbl_date: "Fecha de emisión",
+    cert_cert_of: "CERTIFICADO DE",
+    cert_auth: "AUTENTICIDAD",
+    cert_artist: "ARTISTA",
+    cert_year: "AÑO",
+    cert_technique: "TÉCNICA",
+    cert_dimensions: "DIMENSIONES",
+    cert_category: "CATEGORÍA",
+    cert_support: "SOPORTE",
+    buyer_valid: "Certificado de Autenticidad Validado",
+    buyer_desc: "Este documento digital confirma el registro y procedencia de la obra de arte original de Rosymer Martínez."
+  },
+  en: {
+    lbl_title: "Title of the work",
+    lbl_epigraph: "Epigraph / poetic subtitle",
+    lbl_artist: "Artist",
+    lbl_year: "Year",
+    lbl_technique: "Medium",
+    lbl_dimensions: "Dimensions",
+    lbl_category: "Category",
+    lbl_support: "Support",
+    lbl_city: "City of issue",
+    lbl_date: "Date of issue",
+    cert_cert_of: "CERTIFICATE OF",
+    cert_auth: "AUTHENTICITY",
+    cert_artist: "ARTIST",
+    cert_year: "YEAR",
+    cert_technique: "MEDIUM",
+    cert_dimensions: "DIMENSIONS",
+    cert_category: "CATEGORY",
+    cert_support: "SUPPORT",
+    buyer_valid: "Certificate of Authenticity Verified",
+    buyer_desc: "This digital document confirms the registration and provenance of the original artwork by Rosymer Martínez."
+  }
+};
+
+function applyLanguage() {
+  const t = i18n[currentLang];
+  
+  if ($('lbl-titulo')) $('lbl-titulo').innerText = t.lbl_title;
+  if ($('lbl-epigrafe')) $('lbl-epigrafe').innerText = t.lbl_epigraph;
+  if ($('lbl-artista')) $('lbl-artista').innerText = t.lbl_artist;
+  if ($('lbl-anio')) $('lbl-anio').innerText = t.lbl_year;
+  if ($('lbl-tecnica')) $('lbl-tecnica').innerText = t.lbl_technique;
+  if ($('lbl-dimensiones')) $('lbl-dimensiones').innerText = t.lbl_dimensions;
+  if ($('lbl-categoria')) $('lbl-categoria').innerText = t.lbl_categoria;
+  if ($('lbl-soporte')) $('lbl-soporte').innerText = t.lbl_support;
+  if ($('lbl-ciudad')) $('lbl-ciudad').innerText = t.lbl_city;
+  if ($('lbl-fecha')) $('lbl-fecha').innerText = t.lbl_date;
+  
+  const eyebrow = document.querySelector('.cert-eyebrow');
+  if (eyebrow) eyebrow.innerText = t.cert_cert_of;
+  const heading = document.querySelector('.cert-heading');
+  if (heading) heading.innerText = t.cert_auth;
+  
+  const detailKeys = document.querySelectorAll('.cert-details .item .k');
+  if(detailKeys.length >= 6) {
+    detailKeys[0].innerText = t.cert_artist;
+    detailKeys[1].innerText = t.cert_year;
+    detailKeys[2].innerText = t.cert_technique;
+    detailKeys[3].innerText = t.cert_dimensions;
+    detailKeys[4].innerText = t.cert_category;
+    detailKeys[5].innerText = t.cert_support;
+  }
+  
+  if ($('btn-lang-es')) {
+    $('btn-lang-es').style.fontWeight = currentLang === 'es' ? 'bold' : 'normal';
+    $('btn-lang-es').style.opacity = currentLang === 'es' ? '1' : '0.5';
+  }
+  if ($('btn-lang-en')) {
+    $('btn-lang-en').style.fontWeight = currentLang === 'en' ? 'bold' : 'normal';
+    $('btn-lang-en').style.opacity = currentLang === 'en' ? '1' : '0.5';
+  }
+  
+  const bbTitle = $('bb-title');
+  if (bbTitle) bbTitle.innerText = t.buyer_valid;
+  const bbDesc = $('bb-desc');
+  if (bbDesc) bbDesc.innerText = t.buyer_desc;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('app_lang', lang);
+  applyLanguage();
+  updatePreview();
+}
 
 // --- CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE ---
 let supaClient = null;
@@ -1107,6 +1213,8 @@ $('btn-pdf').addEventListener('click', () => {
   let y = 0.70;
   
   // Helper para dibujar texto auto-ajustable
+  const t = i18n[currentLang];
+
   const drawTitleText = (text, defaultSize, defaultSpace, color) => {
     let size = defaultSize;
     let space = defaultSpace;
@@ -1122,10 +1230,10 @@ $('btn-pdf').addEventListener('click', () => {
   };
 
   doc.setFont('helvetica', 'bold');
-  drawTitleText('CERTIFICADO DE', 10.5, 0.06, [goldR, goldG, goldB]);
+  drawTitleText(t.cert_cert_of, 10.5, 0.06, [goldR, goldG, goldB]);
   
   y += 0.22;
-  drawTitleText('AUTENTICIDAD', 17, 0.08, [inkR, inkG, inkB]);
+  drawTitleText(t.cert_auth, 17, 0.08, [inkR, inkG, inkB]);
 
   y += 0.08;
   doc.setDrawColor(goldR, goldG, goldB);
@@ -1153,12 +1261,12 @@ $('btn-pdf').addEventListener('click', () => {
 
   // Detalles en Grid (2 Columnas)
   const details = [
-    ['ARTISTA', $('f-artista').value || '—'],
-    ['AÑO', $('f-anio').value || '—'],
-    ['TÉCNICA', $('f-tecnica').value || '—'],
-    ['DIMENSIONES', $('f-dimensiones').value || '—'],
-    ['CATEGORÍA', $('f-categoria').value || '—'],
-    ['SOPORTE', $('f-soporte').value || '—'],
+    [t.cert_artist, $('f-artista').value || '—'],
+    [t.cert_year, $('f-anio').value || '—'],
+    [t.cert_technique, $('f-tecnica').value || '—'],
+    [t.cert_dimensions, $('f-dimensiones').value || '—'],
+    [t.cert_category, $('f-categoria').value || '—'],
+    [t.cert_support, $('f-soporte').value || '—'],
   ];
   
   const colX = [rightX, rightX + 1.45];
@@ -1237,6 +1345,10 @@ async function checkBuyerMode() {
   const code = params.get('code');
   if (!code) return;
   
+  isBuyerView = true;
+  if ($('pwa-install-prompt')) $('pwa-install-prompt').style.display = 'none';
+  if ($('lang-switcher')) $('lang-switcher').style.margin = '0 auto';
+  
   console.log("Visor Comprador Activado. Código:", code);
   
   // Ocultar controles administrativos
@@ -1259,7 +1371,7 @@ async function checkBuyerMode() {
   if ($('btn-save')) $('btn-save').style.display = 'none';
   if ($('save-status')) $('save-status').style.display = 'none';
   
-  // Banner de Verificación
+  const t = i18n[currentLang];
   const mainEl = document.querySelector('main');
   const banner = document.createElement('div');
   banner.className = 'buyer-banner';
@@ -1267,8 +1379,8 @@ async function checkBuyerMode() {
     <div style="display:flex; align-items:center; justify-content:center; gap:12px; max-width:400px; margin:0 auto; text-align:left;">
       <i class="fa-solid fa-circle-check" style="color:var(--gold); font-size:24px;"></i>
       <div>
-        <h4 style="margin:0; font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink);">Certificado de Autenticidad Validado</h4>
-        <p style="margin:2px 0 0; font-size:11px; color:var(--text-dim); line-height:1.35;">Este documento digital confirma el registro y procedencia de la obra de arte original de Rosymer Martínez.</p>
+        <h4 id="bb-title" style="margin:0; font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink);">${t.buyer_valid}</h4>
+        <p id="bb-desc" style="margin:2px 0 0; font-size:11px; color:var(--text-dim); line-height:1.35;">${t.buyer_desc}</p>
       </div>
     </div>
   `;
@@ -1315,7 +1427,8 @@ async function checkBuyerMode() {
       return;
     }
     
-    statusBanner.innerHTML = '<span style="color:var(--aqua-deep); font-weight:bold;">✓ Sincronización oficial: Firmado digitalmente de forma correcta.</span>';
+    // Status banner se oculta si tuvo éxito, dejando solo el banner bonito
+    statusBanner.style.display = 'none';
     
     const parsedData = {
       code: data.code,
@@ -1890,6 +2003,7 @@ async function initializeApp() {
   isAppInitialized = true;
   
   await initSupabase();
+  applyLanguage();
   await checkBuyerMode();
   
   initPWAInstallation();
