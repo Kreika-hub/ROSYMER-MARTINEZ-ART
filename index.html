@@ -2028,19 +2028,9 @@ async function triggerAndroidInstall() {
     const { outcome } = await deferredPrompt.userChoice;
     console.log(`PWA install choice: ${outcome}`);
     deferredPrompt = null;
-    dismissInstallPrompt();
-  } else {
-    // Chrome bloqueó el evento mágico. Transformar el botón en instrucciones visuales amigables.
-    const area = document.getElementById('pwa-trigger-area');
-    if (area) {
-      area.innerHTML = `
-        <div class="ios-instruction-box">
-          <span style="font-weight:700; color:var(--ink);"><i class="fa-solid fa-circle-info"></i> Requerido por Chrome:</span>
-          <p style="margin:4px 0 0;">Para instalarla gratis toca el menú de 3 puntos <i class="fa-solid fa-ellipsis-vertical" style="color:var(--aqua-deep);"></i> arriba a la derecha en tu navegador y presiona <strong>"Instalar aplicación"</strong>.</p>
-        </div>
-      `;
-    }
   }
+  // Pase lo que pase (se instale o Chrome lo bloquee secretamente), desaparecemos la ventana sin decir una sola palabra. Cero mensajes.
+  dismissInstallPrompt();
 }
 
 function dismissInstallPrompt() {
