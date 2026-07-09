@@ -1,0 +1,17 @@
+const fs = require('fs');
+try {
+  const binaryData = fs.readFileSync('Logo Rosy.png');
+  const base64String = binaryData.toString('base64');
+  const dataUrl = 'data:image/png;base64,' + base64String;
+  
+  const htmlPath = 'C:\\Users\\HP\\Downloads\\certificado-autenticidad-v2.html';
+  let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+  
+  // Reemplazar la declaración inicial del logo
+  htmlContent = htmlContent.replace("let logoBase64 = '';", "let logoBase64 = '" + dataUrl + "';");
+  
+  fs.writeFileSync(htmlPath, htmlContent, 'utf8');
+  console.log('SUCCESS-LOGO-EMBEDDED');
+} catch (err) {
+  console.error('ERROR:', err.message);
+}

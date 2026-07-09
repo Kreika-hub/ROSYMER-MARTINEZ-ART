@@ -1,0 +1,4 @@
+Resultado: Resolved Base Path: C:\Users\HP\Desktop\ROSY WORD\
+Writing to: C:\Users\HP\Desktop\ROSY WORD\icon-192.png
+Writing to: C:\Users\HP\Desktop\ROSY WORD\icon-512.png
+C# Resizer success!

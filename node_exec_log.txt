@@ -1,0 +1,81 @@
+2026-07-09T00:11:09.309Z - Executing test_node.js. Args: C:\Program Files\nodejs\node.exe C:\Users\HP\Desktop\ROSY WORD\test_node.js C:\Users\HP\AppData\Local\Temp/git-blob-a19488/sw.js
+2026-07-09T00:11:09.309Z - Spawning cmd: cd C:\ && powershell -ExecutionPolicy Bypass -Command "& { & 'C:\Users\HP\Desktop\ROSY WORD\generate_icons.ps1' } 2>&1"
+2026-07-09T00:11:09.309Z - Spawn output: Icons generated successfully!
+
+2026-07-09T00:11:11.603Z - Executing test_node.js. Args: C:\Program Files\nodejs\node.exe C:\Users\HP\Desktop\ROSY WORD\test_node.js sw.js
+2026-07-09T00:11:11.603Z - Spawning cmd: cd C:\ && powershell -ExecutionPolicy Bypass -Command "& { & 'C:\Users\HP\Desktop\ROSY WORD\generate_icons.ps1' } 2>&1"
+2026-07-09T00:11:11.603Z - Spawn output: Icons generated successfully!
+
+2026-07-09T02:17:00.010Z - Starting disk search...
+2026-07-09T02:17:00.010Z - Search result: Found icons:
+None found
+2026-07-09T02:17:01.616Z - Starting disk search...
+2026-07-09T02:17:01.616Z - Search result: Found icons:
+None found
+2026-07-09T02:21:09.948Z - Starting C# Compilation...
+2026-07-09T02:21:09.948Z - Running compile: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /out:"C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.cs" 2>&1
+2026-07-09T02:21:09.948Z - Compile Output: Microsoft (R) Visual C# Compiler version 4.8.9232.0
+for C# 5
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+This compiler is provided as part of the Microsoft (R) .NET Framework, but only supports language versions up to C# 5, which is no longer the latest version. For compilers that support newer versions of the C# programming language, see http://go.microsoft.com/fwlink/?LinkID=533240
+
+
+2026-07-09T02:21:09.948Z - Running executable: "C:\Users\HPDesktop\ROSY WORD\ResizeIcons.exe" 2>&1
+2026-07-09T02:21:09.948Z - C# Pipeline Error: Error: Command failed: "C:\Users\HPDesktop\ROSY WORD\ResizeIcons.exe" 2>&1
+Stdout: El sistema no puede encontrar la ruta especificada.
+
+Stderr: 
+2026-07-09T02:21:15.503Z - Starting C# Compilation...
+2026-07-09T02:21:15.503Z - Running compile: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /out:"C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.cs" 2>&1
+2026-07-09T02:21:15.503Z - Compile Output: Microsoft (R) Visual C# Compiler version 4.8.9232.0
+for C# 5
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+This compiler is provided as part of the Microsoft (R) .NET Framework, but only supports language versions up to C# 5, which is no longer the latest version. For compilers that support newer versions of the C# programming language, see http://go.microsoft.com/fwlink/?LinkID=533240
+
+
+2026-07-09T02:21:15.503Z - Running executable: "C:\Users\HPDesktop\ROSY WORD\ResizeIcons.exe" 2>&1
+2026-07-09T02:21:15.503Z - C# Pipeline Error: Error: Command failed: "C:\Users\HPDesktop\ROSY WORD\ResizeIcons.exe" 2>&1
+Stdout: El sistema no puede encontrar la ruta especificada.
+
+Stderr: 
+2026-07-09T02:22:47.388Z - Starting C# Compilation...
+2026-07-09T02:22:47.388Z - Running compile: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /out:"C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.cs" 2>&1
+2026-07-09T02:22:47.388Z - Compile Output: Microsoft (R) Visual C# Compiler version 4.8.9232.0
+for C# 5
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+This compiler is provided as part of the Microsoft (R) .NET Framework, but only supports language versions up to C# 5, which is no longer the latest version. For compilers that support newer versions of the C# programming language, see http://go.microsoft.com/fwlink/?LinkID=533240
+
+
+2026-07-09T02:22:47.388Z - Running executable: "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" 2>&1
+2026-07-09T02:22:47.388Z - Run Output: C# Resizer success!
+
+2026-07-09T02:22:49.642Z - Starting C# Compilation...
+2026-07-09T02:22:49.642Z - Running compile: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /out:"C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.cs" 2>&1
+2026-07-09T02:22:49.642Z - Compile Output: Microsoft (R) Visual C# Compiler version 4.8.9232.0
+for C# 5
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+This compiler is provided as part of the Microsoft (R) .NET Framework, but only supports language versions up to C# 5, which is no longer the latest version. For compilers that support newer versions of the C# programming language, see http://go.microsoft.com/fwlink/?LinkID=533240
+
+
+2026-07-09T02:22:49.642Z - Running executable: "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" 2>&1
+2026-07-09T02:22:49.642Z - Run Output: C# Resizer success!
+
+2026-07-09T02:43:59.275Z - Starting C# Compilation...
+2026-07-09T02:43:59.275Z - Running compile: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /out:"C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.cs" 2>&1
+2026-07-09T02:43:59.275Z - Compile Output: Microsoft (R) Visual C# Compiler version 4.8.9232.0
+for C# 5
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+This compiler is provided as part of the Microsoft (R) .NET Framework, but only supports language versions up to C# 5, which is no longer the latest version. For compilers that support newer versions of the C# programming language, see http://go.microsoft.com/fwlink/?LinkID=533240
+
+
+2026-07-09T02:43:59.275Z - Running executable: "C:\Users\HP\Desktop\ROSY WORD\ResizeIcons.exe" 2>&1
+2026-07-09T02:43:59.275Z - Run Output: Resolved Base Path: C:\Users\HP\Desktop\ROSY WORD\
+Writing to: C:\Users\HP\Desktop\ROSY WORD\icon-192.png
+Writing to: C:\Users\HP\Desktop\ROSY WORD\icon-512.png
+C# Resizer success!
+

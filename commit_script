@@ -1,0 +1,8 @@
+const { execFile } = require('child_process');
+execFile('git', ['commit', '-m', 'Clean index.html and logo loading, fix token limit issue'], (err, stdout, stderr) => {
+  if (err) {
+    console.error('Error al hacer commit:', err);
+    process.exit(1);
+  }
+  console.log(stdout);
+});

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Get Logo Base64</title>
+</head>
+<body>
+  <h3>Cargando logotipo...</h3>
+  <img id="logo" src="Logo Rosy.png" onload="encode()" onerror="showError()">
+  <div id="output" style="word-break: break-all; font-family: monospace; font-size: 10px; margin-top: 20px;"></div>
+  
+  <script>
+    function encode() {
+      try {
+        const img = document.getElementById('logo');
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const base64 = canvas.toDataURL('image/png');
+        document.getElementById('output').textContent = base64;
+        document.querySelector('h3').textContent = "¡Completado con éxito!";
+      } catch (err) {
+        document.querySelector('h3').textContent = "Error al convertir: " + err.message;
+      }
+    }
+    function showError() {
+      document.querySelector('h3').textContent = "Error: No se pudo cargar la imagen 'Logo Rosy.png'";
+    }
+  </script>
+</body>
+</html>
