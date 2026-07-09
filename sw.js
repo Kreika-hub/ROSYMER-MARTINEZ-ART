@@ -1,4 +1,4 @@
-const CACHE_NAME = 'certificados-rm-v1';
+const CACHE_NAME = 'certificados-rm-20260708-v2';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -15,6 +15,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
@@ -28,18 +29,31 @@ self.addEventListener('activate', (e) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            return caches.delete(key);
+             return caches.delete(key);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
-    })
+    fetch(e.request)
+      .then((response) => {
+        // Enfoque Network-First (siempre obtiene la versión más reciente si hay internet)
+        // Clonamos la respuesta para guardar lo más reciente en caché silenciosamente
+        if(response && response.status === 200 && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseToCache);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // Fallback a Caché en caso de estar offline (Modo Avión)
+        return caches.match(e.request);
+      })
   );
 });

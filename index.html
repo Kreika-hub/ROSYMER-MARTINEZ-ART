@@ -824,6 +824,11 @@ let supKey = localStorage.getItem('supabase_anon_key') || '';
 function initSupabase() {
   if (supUrl && supKey) {
     try {
+      if (typeof window.supabase === 'undefined') {
+        console.warn("Supabase library not loaded. Offline mode active.");
+        supabase = null;
+        return;
+      }
       supabase = window.supabase.createClient(supUrl, supKey);
       console.log("Supabase inicializado correctamente.");
     } catch (err) {
@@ -997,23 +1002,28 @@ function updatePreview() {
     const host = window.location.origin === 'null' ? 'https://rosymer-martinez.art' : window.location.origin + window.location.pathname;
     const url = `${host}?code=${encodeURIComponent(certCode)}`;
     try {
-      new QRCode(qrContainer, {
-        text: url,
-        width: 150,
-        height: 150,
-        colorDark : "#0b2e2b",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-      });
-      // Asegurar que el QR ocupe todo su div para los estilos CSS establecidos
-      setTimeout(() => {
-        const qrImgElement = qrContainer.querySelector('img');
-        if (qrImgElement) {
-            qrImgElement.style.width = '100%';
-            qrImgElement.style.height = '100%';
-            qrImgElement.style.objectFit = 'contain';
-        }
-      }, 50);
+      if (typeof QRCode === 'undefined') {
+         console.warn("Librería QRCode no está disponible (offine severo). El QR quedará vacío o no se generará.");
+         qrContainer.innerHTML = '<span style="font-size:10px; color:#ccc;">QR n/a</span>';
+      } else {
+        new QRCode(qrContainer, {
+          text: url,
+          width: 150,
+          height: 150,
+          colorDark : "#0b2e2b",
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.H
+        });
+        // Asegurar que el QR ocupe todo su div para los estilos CSS establecidos
+        setTimeout(() => {
+          const qrImgElement = qrContainer.querySelector('img');
+          if (qrImgElement) {
+              qrImgElement.style.width = '100%';
+              qrImgElement.style.height = '100%';
+              qrImgElement.style.objectFit = 'contain';
+          }
+        }, 50);
+      }
     } catch (err) {
       console.error("Error QR:", err);
     }
@@ -1022,6 +1032,10 @@ function updatePreview() {
 
 // --- GENERADOR DE PDF HORIZONTAL (7 x 5 in) ---
 $('btn-pdf').addEventListener('click', () => {
+  if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+    alert("La librería creadora de PDFs no ha podido cargar por problemas de red. Conéctate e inténtalo de nuevo.");
+    return;
+  }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'in', format:[7,5], orientation:'landscape' });
 
@@ -1493,13 +1507,22 @@ function openCropModal(imageSrc) {
   }
   
   setTimeout(() => {
-    cropperInstance = new Cropper(cropImg, {
-      aspectRatio: NaN,
-      viewMode: 1,
-      autoCropArea: 0.9,
-      dragMode: 'move',
-      responsive: true
-    });
+    try {
+      if (typeof Cropper === 'undefined') {
+         alert("No se pudo cargar el editor de recorte inteligente. Tu foto se guardará sin recorte (en su formato original).");
+         return;
+      }
+      cropperInstance = new Cropper(cropImg, {
+        aspectRatio: NaN,
+        viewMode: 1,
+        autoCropArea: 0.9,
+        dragMode: 'move',
+        responsive: true
+      });
+    } catch (err) {
+       console.error("Error inicializando Cropper:", err);
+       alert("No se pudo cargar el editor de recorte. Tu foto se guardará sin recorte.");
+    }
   }, 100);
 }
 
@@ -1520,18 +1543,28 @@ function closeCropModal() {
 }
 
 function saveCroppedImage() {
-  if (!cropperInstance) return;
+  const cropImg = $('cropper-image');
+  let compressedBase64 = '';
   
-  const canvas = cropperInstance.getCroppedCanvas({
-    maxWidth: 900,
-    maxHeight: 1200,
-    imageSmoothingEnabled: true,
-    imageSmoothingQuality: 'high'
-  });
+  if (!cropperInstance) {
+    // Si Cropper falló (offline puro), usar la imagen directamente en un tamaño comprimido básico.
+    compressedBase64 = cropImg.src; 
+  } else {
+    try {
+      const canvas = cropperInstance.getCroppedCanvas({
+        maxWidth: 900,
+        maxHeight: 1200,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
+      });
+      compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+    } catch(err) {
+      console.error(err);
+      compressedBase64 = cropImg.src;
+    }
+  }
   
-  const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
   const idx = activePhotoIndexSelected;
-  
   artPhotos[idx - 1] = compressedBase64;
   
   const imgPreview = $('img-preview-' + idx);
