@@ -1995,7 +1995,7 @@ function initPWAInstallation() {
   if (!isStandalone && isMobile && promptEl) {
     promptEl.style.display = 'block';
     
-    // Fallback nativo: Si el dispositivo es iOS, o si en Android Chrome restringe/demora el evento programático
+    // Fallback nativo: Si el dispositivo es iOS, muestra instrucciones obligatorias de Apple
     if (isiOS) {
       $('pwa-trigger-area').innerHTML = `
         <div class="ios-instruction-box">
@@ -2007,26 +2007,18 @@ function initPWAInstallation() {
         </div>
       `;
     } else {
-      $('pwa-trigger-area').innerHTML = `
-        <div class="ios-instruction-box">
-          <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-android"></i> Descargar directo en Android:</span>
-          <p style="margin:4px 0 0;">Usa el menú de 3 puntos de Chrome <i class="fa-solid fa-ellipsis-vertical" style="color:var(--aqua-deep);"></i> y presiona <strong>"Instalar aplicación"</strong>.</p>
-        </div>
-      `;
-    }
-  }
-
-  // Capturar evento de instalación nativa PWA en Android (Botón Automático)
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    
-    if (!isStandalone && promptEl) {
-      promptEl.style.display = 'block'; 
+      // Android: Siempre muestra un botón limpio "Descargar". 
+      // El navegador conectará el evento nativamente si nos da permiso, o lanzará nuestro fallback si no lo da.
       $('pwa-trigger-area').innerHTML = `
         <button class="pwa-btn-install" style="font-size: 1.1rem; padding: 12px 24px;" onclick="triggerAndroidInstall()"><i class="fa-solid fa-download"></i> Descargar</button>
       `;
     }
+  }
+
+  // Capturar evento de instalación nativa PWA en Android silenciosamente
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
   });
 }
 
@@ -2037,6 +2029,9 @@ async function triggerAndroidInstall() {
     console.log(`PWA install choice: ${outcome}`);
     deferredPrompt = null;
     dismissInstallPrompt();
+  } else {
+    // Si Chrome bloquea la instalación mágica por motivos de caché o seguridad, le decimos amablemente qué picar:
+    alert("Para instalarla directo al celular: Toca los 3 puntitos de opciones de Chrome arriba a la derecha y selecciona 'Instalar aplicación' o 'Agregar a la pantalla principal'.");
   }
 }
 
