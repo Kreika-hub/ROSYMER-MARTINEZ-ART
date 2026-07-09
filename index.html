@@ -1309,39 +1309,43 @@ async function generarPDF(certData) {
     doc.text(valLines, x, rowY + 0.14);
   });
 
-  // --- PIE DE PÁGINA (Calculado de abajo hacia arriba) ---
-  const bottomPadding = 0.08;
-  const row3Height = 0.85;
-
-  const row3Y = printableBottom - bottomPadding - row3Height;
-  const row2Y = row3Y - 0.14;
-  const row1Y = row2Y - 0.18;
-  const dividerY = row1Y - 0.12;
-
+  // --- PIE DE PÁGINA (Alineación Paralela) ---
+  const bottomMargin = 0.15; 
+  const footerH = 0.55; 
+  const baseY = printableBottom - bottomMargin;
+  const dividerY = baseY - footerH - 0.12;
+  
   // Línea divisoria del pie
   doc.setDrawColor(goldR, goldG, goldB);
   doc.setLineWidth(0.006);
   doc.line(rightX, dividerY, rightX + rightW, dividerY);
 
-  // --- FILA 1: Código de Autenticidad ---
-  doc.setFont('helvetica', 'bold');
-  drawSpacedText(certData.code, rightX + rightW, row1Y, { fontSize: 11, charSpace: 0.03, align: 'right', maxWidth: rightW, color: [goldR, goldG, goldB] });
+  // --- SECIÓN DERECHA: Código y Fecha ---
+  const codeY = baseY - 0.22;
+  const dateY = baseY;
   
-  // --- FILA 2: Ciudad y Fecha ---
+  doc.setFont('helvetica', 'bold');
+  drawSpacedText(certData.code, rightX + rightW, codeY, { fontSize: 11, charSpace: 0.03, align: 'right', maxWidth: rightW, color: [goldR, goldG, goldB] });
+  
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(dimR, dimG, dimB);
   const place = [certData.ciudad, formatDate(certData.fecha)].filter(Boolean).join(' · ');
-  doc.text(place, rightX + rightW, row2Y, { align: 'right' });
+  doc.text(place, rightX + rightW, dateY, { align: 'right' });
 
-  // --- FILA 3: Logo a la izquierda y QR a la derecha ---
-  // Logo
+  // --- SECCIÓN IZQUIERDA: Logo (Proporcional) y QR ---
+  const decH = 0.48; // Altura pequeña, acorde al pie
+  const decY = baseY - decH + 0.05; 
+  const logoX = rightX;
+  const qrX = rightX + 1.25;
+
+  // Logo proporcional
   const logoImg = $('corporate-logo-img');
-  if (logoImg && logoImg.naturalWidth) {
+  if (logoImg && logoImg.naturalWidth && logoImg.naturalHeight) {
     try {
-      const logoHeight = 0.4;
-      const logoY = row3Y + (row3Height - logoHeight) / 2;
-      doc.addImage(logoImg, 'PNG', rightX + 0.1, logoY, 0.8, logoHeight);
+      const ratio = logoImg.naturalWidth / logoImg.naturalHeight;
+      const logoW = decH * ratio; // Mantiene su relación de aspecto real sin aplastarse
+      doc.addImage(logoImg, 'PNG', logoX, decY, logoW, decH);
     } catch (logoErr) {
       console.error("Error al incrustar logotipo en PDF:", logoErr);
     }
@@ -1352,10 +1356,13 @@ async function generarPDF(certData) {
     if (typeof QRCode !== 'undefined') {
       const qrDiv = document.createElement('div');
       const qrUrl = `${window.location.origin === 'null' ? 'https://rosymer-martinez.art' : window.location.origin + window.location.pathname}?code=${encodeURIComponent(certData.code)}`;
-      new QRCode(qrDiv, { text: qrUrl, width: 150, height: 150, colorDark : "#0b2e2b", colorLight : "#ffffff" });
+      // Generamos el canvas un poco más grande en pixeles para mejor scan, pero se escala a `decH` en pulgadas
+      new QRCode(qrDiv, { text: qrUrl, width: 200, height: 200, colorDark : "#0b2e2b", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+      
+      // jsPDF soporta usar el Canvas directamente, previniendo bugs visuales de exportación a URL
       const qrCanvas = qrDiv.querySelector('canvas');
       if (qrCanvas) {
-        doc.addImage(qrCanvas.toDataURL('image/png'), 'PNG', rightX + 1.8, row3Y, row3Height, row3Height); 
+        doc.addImage(qrCanvas, 'PNG', qrX, decY, decH, decH); 
       }
     }
   } catch (qrErr) {
