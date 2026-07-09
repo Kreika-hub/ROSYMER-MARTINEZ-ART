@@ -1819,20 +1819,28 @@ async function loadGallery() {
         );
         if (confirmed) {
           try {
-            const { error: delError } = await supaClient.from('certificates').delete().eq('code', data.code);
+            console.log('Intentando eliminar código:', data.code);
+            const result = await supaClient
+              .from('certificates')
+              .delete()
+              .eq('code', data.code);
+            
+            console.log('Resultado del delete:', JSON.stringify(result));
+            
+            const delError = result.error;
             if (delError) {
-              console.error(delError);
+              console.error('Error Supabase delete:', delError);
               await showAlert(
-                currentLang === 'es' ? 'Error al eliminar en la nube: ' + delError.message : 'Error deleting from cloud: ' + delError.message,
-                '❌',
-                'Error'
+                (currentLang === 'es' ? 'Error al eliminar: ' : 'Delete error: ') + delError.message,
+                '❌', 'Error'
               );
             } else {
-              try { localStorage.removeItem('cert:' + data.code); } catch(e) {}
+              console.log('Eliminado correctamente.');
+              try { localStorage.removeItem('cert:' + data.code); } catch(e2) {}
               loadGallery();
             }
           } catch (err) {
-            console.error(err);
+            console.error('Excepción en delete:', err);
             await showAlert(err.message || 'Unknown error', '❌', 'Error');
           }
         }
