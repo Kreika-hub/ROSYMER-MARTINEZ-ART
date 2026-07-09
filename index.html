@@ -817,7 +817,7 @@ window.storage = {
 };
 
 // --- CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE ---
-let supabase = null;
+let supaClient = null;
 let supUrl = localStorage.getItem('supabase_url') || '';
 let supKey = localStorage.getItem('supabase_anon_key') || '';
 
@@ -826,17 +826,17 @@ function initSupabase() {
     try {
       if (typeof window.supabase === 'undefined') {
         console.warn("Supabase library not loaded. Offline mode active.");
-        supabase = null;
+        supaClient = null;
         return;
       }
-      supabase = window.supabase.createClient(supUrl, supKey);
+      supaClient = window.supabase.createClient(supUrl, supKey);
       console.log("Supabase inicializado correctamente.");
     } catch (err) {
       console.error("Error al inicializar cliente Supabase:", err);
-      supabase = null;
+      supaClient = null;
     }
   } else {
-    supabase = null;
+    supaClient = null;
   }
 }
 initSupabase();
@@ -1269,7 +1269,7 @@ async function checkBuyerMode() {
   statusBanner.setAttribute('style', 'font-size:12px; color:var(--text-dim); text-align:center; margin-bottom:16px; font-weight:600;');
   mainEl.insertBefore(statusBanner, banner.nextSibling);
   
-  if (!supabase) {
+  if (!supaClient) {
     const key = 'cert:' + code;
     try {
       const res = await window.storage.get(key, false);
@@ -1286,7 +1286,7 @@ async function checkBuyerMode() {
   
   try {
     statusBanner.innerHTML = 'Consultando registros en la nube de Supabase...';
-    const { data, error } = await supabase
+    const { data, error } = await supaClient
       .from('certificates')
       .select('*')
       .eq('code', code)
@@ -1360,7 +1360,7 @@ $('btn-save').addEventListener('click', async () => {
     if (result) {
       editingId = certCode;
       
-      if (supabase) {
+      if (supaClient) {
         statusEl.textContent = 'Sincronizando con Supabase...';
         const payload = {
           code: certCode,
@@ -1379,7 +1379,7 @@ $('btn-save').addEventListener('click', async () => {
           photo_3: data.photos[2] || null
         };
         
-        const { error } = await supabase
+        const { error } = await supaClient
           .from('certificates')
           .upsert(payload, { onConflict: 'code' });
           
@@ -1456,8 +1456,8 @@ async function loadGallery() {
         if (confirm('¿Seguro que deseas eliminar este certificado?')) {
           try {
             await window.storage.delete(key, false);
-            if (supabase) {
-              const { error } = await supabase
+            if (supaClient) {
+              const { error } = await supaClient
                 .from('certificates')
                 .delete()
                 .eq('code', data.code);
