@@ -657,10 +657,13 @@
           </div>
 
           <button id="btn-save" class="btn btn-primary" style="margin-top:24px;">
-            <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-save-txt">Guardar en Galería</span>
+            <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-save-txt">Save to Gallery</span>
+          </button>
+          <button id="btn-pdf" class="btn btn-secondary" style="margin-top:10px;">
+            <i class="fa-solid fa-file-arrow-down"></i> <span id="btn-pdf-txt">Download PDF</span>
           </button>
           <div id="save-status" style="display:none; font-size:12px; font-weight:600; color:var(--aqua-deep); text-align:center; margin-top:8px;"></div>
-          <div class="note" id="note-txt">La obra se almacenará temporalmente en tu navegador. Tus fotos no se suben al servidor principal.</div>
+          <div class="note" id="note-txt">The artwork and images are safely stored in the distributed database.</div>
         </div>
 
         <!-- Previsualización Horizontal del Certificado -->
@@ -857,6 +860,7 @@ const i18n = {
     ph_main: "Principal",
     lbl_code: "CÓDIGO ÚNICO DE REGISTRO",
     btn_save_txt: "Guardar en Galería",
+    btn_pdf_txt: "Descargar PDF",
     note_txt: "La obra e imágenes se resguardan de forma segura en la base de datos distribuida.",
     lbl_title: "Título de la obra",
     lbl_epigraph: "Epígrafe / subtítulo poético",
@@ -892,6 +896,7 @@ const i18n = {
     ph_main: "Main",
     lbl_code: "UNIQUE REGISTRATION CODE",
     btn_save_txt: "Save to Gallery",
+    btn_pdf_txt: "Download PDF",
     note_txt: "The artwork and images are safely stored in the distributed database.",
     lbl_title: "Title of the work",
     lbl_epigraph: "Epigraph / poetic subtitle",
@@ -931,6 +936,7 @@ function applyLanguage() {
   if ($('ph-main')) $('ph-main').innerText = t.ph_main;
   if ($('lbl-code')) $('lbl-code').innerText = t.lbl_code;
   if ($('btn-save-txt')) $('btn-save-txt').innerText = t.btn_save_txt;
+  if ($('btn-pdf-txt')) $('btn-pdf-txt').innerText = t.btn_pdf_txt;
   if ($('note-txt')) $('note-txt').innerText = t.note_txt;
 
   if ($('lbl-titulo')) $('lbl-titulo').innerText = t.lbl_title;
@@ -1572,6 +1578,13 @@ document.querySelectorAll('.segmented button').forEach(btn => {
     if (view === 'gallery') loadGallery();
   });
 });
+
+const btnPdf = $('btn-pdf');
+if (btnPdf) {
+  btnPdf.addEventListener('click', async () => {
+    await generarPDF(getFormData());
+  });
+}
 
 const btnSave = $('btn-save');
 if (btnSave) {
