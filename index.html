@@ -1215,28 +1215,37 @@ async function generarPDF(certData) {
   
   let y = 0.70;
   
-  // Helper para dibujar texto auto-ajustable
+  // Helper para textos espaciados con auto-shrink seguro sin bug de desbordamiento (jsPDF align+charSpace fixes)
   const t = i18n[currentLang];
 
-  const drawTitleText = (text, defaultSize, defaultSpace, color) => {
-    let size = defaultSize;
-    let space = defaultSpace;
-    doc.setFontSize(size);
-    let tw = doc.getTextWidth(text) + (text.length * space); 
-    if (tw > rightW - 0.2) {
-      size = size * 0.85;
-      space = space * 0.5;
-      doc.setFontSize(size);
+  function drawSpacedText(text, drawX, drawY, options) {
+    let { fontSize, charSpace = 0, align = 'left', maxWidth = null, color = null } = options;
+    if (color) doc.setTextColor.apply(doc, color);
+    doc.setFontSize(fontSize);
+    
+    // Calcula el ancho real físico del string
+    let width = doc.getTextWidth(text) + (charSpace * (text.length - 1));
+    
+    // Reduce la fuente de forma responsiva hasta que quepa perfectamente
+    while (maxWidth && width > maxWidth && fontSize > 6) {
+      fontSize -= 0.5;
+      doc.setFontSize(fontSize);
+      width = doc.getTextWidth(text) + (charSpace * (text.length - 1));
     }
-    doc.setTextColor.apply(doc, color);
-    doc.text(text, midX, y, { align: 'center', charSpace: space });
-  };
+    
+    let xOffset = drawX;
+    if (align === 'right') xOffset = drawX - width;
+    if (align === 'center') xOffset = drawX - width / 2;
+    
+    // Al pasarlo manualmente alineado a la izq (default), ya no delego el cálculo asimétrico a jsPDF
+    doc.text(text, xOffset, drawY, { charSpace });
+  }
 
   doc.setFont('helvetica', 'bold');
-  drawTitleText(t.cert_cert_of, 10.5, 0.06, [goldR, goldG, goldB]);
+  drawSpacedText(t.cert_cert_of, midX, y, { fontSize: 10.5, charSpace: 0.06, align: 'center', maxWidth: rightW - 0.2, color: [goldR, goldG, goldB] });
   
   y += 0.22;
-  drawTitleText(t.cert_auth, 17, 0.08, [inkR, inkG, inkB]);
+  drawSpacedText(t.cert_auth, midX, y, { fontSize: 17, charSpace: 0.08, align: 'center', maxWidth: rightW - 0.2, color: [inkR, inkG, inkB] });
 
   y += 0.08;
   doc.setDrawColor(goldR, goldG, goldB);
@@ -1283,9 +1292,7 @@ async function generarPDF(certData) {
     const rowY = gridStartY + row * 0.55;
     
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(dimR, dimG, dimB);
-    doc.text(d[0], x, rowY, { charSpace: 0.04 });
+    drawSpacedText(d[0], x, rowY, { fontSize: 8.5, charSpace: 0.04, align: 'left', color: [dimR, dimG, dimB] });
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
@@ -1303,9 +1310,7 @@ async function generarPDF(certData) {
 
   // --- FILA 1: Código de Autenticidad ---
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(goldR, goldG, goldB);
-  doc.text(certData.code, rightX + rightW, footerY + 0.08, { align: 'right', charSpace: 0.03 });
+  drawSpacedText(certData.code, rightX + rightW, footerY + 0.08, { fontSize: 11, charSpace: 0.03, align: 'right', maxWidth: rightW, color: [goldR, goldG, goldB] });
   
   // --- FILA 2: Ciudad y Fecha ---
   doc.setFont('helvetica', 'normal');
