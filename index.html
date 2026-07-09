@@ -208,7 +208,7 @@
   /* Lado Superior - Galería/Carrusel interactivo */
   .cert-image-container {
     width: 100%;
-    height: 42%;
+    flex: 0 0 32%;
     position: relative;
     border-radius: 8px;
     overflow: hidden;
@@ -297,30 +297,30 @@
   /* Lado Derecho - Metadatos */
   .cert-content-container {
     width: 100%;
-    height: 52%;
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     text-align: center;
     z-index: 2;
   }
-  .cert-eyebrow{ font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); font-weight:700; margin-top:4px;}
+  .cert-eyebrow{ font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); font-weight:700; margin-top:0px;}
   .cert-heading{ font-size:14px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink); font-weight:800; margin:2px 0 0;}
-  .cert-title{ font-weight:800; font-size:18px; line-height:1.2; margin:8px 0 2px; color:var(--ink); word-break:break-word;
+  .cert-title{ font-weight:800; font-size:16px; line-height:1.2; margin:4px 0 2px; color:var(--ink); word-break:break-word;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
-  .cert-epigraph{ font-style:italic; font-weight:500; font-size:11px; color:var(--gold); margin:0 0 6px; line-height:1.3;
+  .cert-epigraph{ font-style:italic; font-weight:500; font-size:11px; color:var(--gold); margin:0 0 4px; line-height:1.3;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
-  .cert-divider{ width:45px; height:2.5px; background:var(--gold-gradient); border-radius:2px; opacity:0.9; margin:2px auto 8px;}
+  .cert-divider{ width:45px; height:2.5px; background:var(--gold-gradient); border-radius:2px; opacity:0.9; margin:2px auto 6px;}
   
-  .cert-details{ width:100%; display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; font-size:11px; margin-bottom:auto;}
+  .cert-details{ width:100%; display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; font-size:11px; margin-bottom:auto;}
   .cert-details .item{ text-align:left; }
   .cert-details .item .k{ display:block; color:var(--text-dim); font-size:8px; letter-spacing:0.08em; text-transform:uppercase; font-weight:700;}
   .cert-details .item .v{ color:var(--ink); font-weight:700; font-size:11px; margin-top:1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
   
   .cert-footer{ width:100%; margin-top:8px; padding-top:8px; border-top:1px solid rgba(184,151,90,0.22); display:flex; align-items:center; justify-content:space-between; gap:8px;}
   .cert-qr {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     background: var(--white);
     padding: 2px;
     border-radius: 6px;
@@ -338,8 +338,8 @@
   }
 
   .seal{
-    width: 65px;
-    height: 40px;
+    width: 50px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -500,7 +500,7 @@
 </style>
 </head>
 <body>
-<img id="corporate-logo-img" src="./Logo Rosy.png" style="display:none;" onload="initDefaultLogo()" onerror="initDefaultLogo()">
+<img id="corporate-logo-img" src="./Logo%20Rosy.png" style="display:none;" onload="initDefaultLogo()" onerror="initDefaultLogo()">
 
 <div class="navbar">
   <div class="navbar-inner">
@@ -987,7 +987,7 @@ function updatePreview() {
   // Mostrar el logo en la vista digital
   const sealContainer = $('p-seal');
   if (sealContainer) {
-    sealContainer.innerHTML = '<img id="p-seal-img" src="./Logo Rosy.png" alt="Logo">';
+    sealContainer.innerHTML = '<img id="p-seal-img" src="./Logo%20Rosy.png" alt="Logo">';
   }
 
   // Generar QR Local Offline
