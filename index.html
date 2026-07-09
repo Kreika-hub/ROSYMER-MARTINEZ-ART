@@ -877,7 +877,7 @@ function applyLanguage() {
   if ($('lbl-anio')) $('lbl-anio').innerText = t.lbl_year;
   if ($('lbl-tecnica')) $('lbl-tecnica').innerText = t.lbl_technique;
   if ($('lbl-dimensiones')) $('lbl-dimensiones').innerText = t.lbl_dimensions;
-  if ($('lbl-categoria')) $('lbl-categoria').innerText = t.lbl_categoria;
+  if ($('lbl-categoria')) $('lbl-categoria').innerText = t.lbl_category;
   if ($('lbl-soporte')) $('lbl-soporte').innerText = t.lbl_support;
   if ($('lbl-ciudad')) $('lbl-ciudad').innerText = t.lbl_city;
   if ($('lbl-fecha')) $('lbl-fecha').innerText = t.lbl_date;
@@ -1993,8 +1993,10 @@ function initPWAInstallation() {
 
   // Forzamos que siempre aparezca el modal para pantallas móviles si no está instalada la PWA.
   if (!isStandalone && isMobile && promptEl) {
+    promptEl.style.display = 'block';
+    
+    // Fallback nativo: Si el dispositivo es iOS, o si en Android Chrome restringe/demora el evento programático
     if (isiOS) {
-      promptEl.style.display = 'block';
       $('pwa-trigger-area').innerHTML = `
         <div class="ios-instruction-box">
           <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-apple"></i> Descargar directo en iPhone:</span>
@@ -2005,9 +2007,12 @@ function initPWAInstallation() {
         </div>
       `;
     } else {
-      // En Android esperamos a que el OS emita el evento canónico para mostrar el popup
-      promptEl.style.display = 'none';
-      $('pwa-trigger-area').innerHTML = '';
+      $('pwa-trigger-area').innerHTML = `
+        <div class="ios-instruction-box">
+          <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-android"></i> Descargar directo en Android:</span>
+          <p style="margin:4px 0 0;">Usa el menú de 3 puntos de Chrome <i class="fa-solid fa-ellipsis-vertical" style="color:var(--aqua-deep);"></i> y presiona <strong>"Instalar aplicación"</strong>.</p>
+        </div>
+      `;
     }
   }
 
