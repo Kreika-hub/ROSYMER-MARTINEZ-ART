@@ -819,7 +819,8 @@ window.storage = {
 
 // --- GLOBAL STATE ---
 let isBuyerView = false;
-let currentLang = localStorage.getItem('app_lang') || 'en';
+let currentLang = 'en';
+try { currentLang = localStorage.getItem('app_lang') || 'en'; } catch(e) {}
 
 const i18n = {
   es: {
@@ -914,7 +915,11 @@ function applyLanguage() {
 
 function setLang(lang) {
   currentLang = lang;
-  localStorage.setItem('app_lang', lang);
+  try {
+    localStorage.setItem('app_lang', lang);
+  } catch(e) {
+    console.warn('Incognito mode blocked localStorage. Preference not saved.');
+  }
   applyLanguage();
   updatePreview();
 }
