@@ -1022,7 +1022,9 @@ function genCode() {
   const iconTit = initials(title).padEnd(2, 'X').slice(0, 2);
   const yr = year || new Date().getFullYear().toString();
   
-  const seed = (artist + title + yr).toLowerCase();
+  const suffix = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+  const seed = (artist + title + yr + suffix).toLowerCase();
+  
   const h = hashCode(seed).padEnd(4, 'X').slice(0, 4);
   return `${iconArt}-${iconTit}-${yr}-${h}`;
 }
@@ -1137,8 +1139,8 @@ function updatePreview() {
   }
 }
 
-// --- GENERADOR DE PDF HORIZONTAL (7 x 5 in) ---
-$('btn-pdf').addEventListener('click', () => {
+// --- GENERADOR DE PDF ---
+async function generarPDF(certData) {
   if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
     alert("La librería creadora de PDFs no ha podido cargar por problemas de red. Conéctate e inténtalo de nuevo.");
     return;
@@ -1167,17 +1169,18 @@ $('btn-pdf').addEventListener('click', () => {
   const boxW = 3.1, boxH = 4.2;
   const boxX = 0.4, boxY = 0.4;
 
-  if (artPhotos[0]) {
+  if (certData.photos && certData.photos[0]) {
     try {
-      const imgEl = $('p-img-1');
-      let imgW = imgEl.naturalWidth || 800;
-      let imgH = imgEl.naturalHeight || 1000;
+      const imgObj = new Image();
+      imgObj.src = certData.photos[0];
+      await new Promise(r => imgObj.onload = r);
+      let imgW = imgObj.width || 800;
+      let imgH = imgObj.height || 1000;
       let imgRatio = imgW / imgH;
       const boxRatio = boxW / boxH;
 
       let drawW = boxW, drawH = boxH, drawX = boxX, drawY = boxY;
 
-      // Calcular proporción fit sin deformar
       if (imgRatio > boxRatio) {
         drawW = boxW;
         drawH = boxW / imgRatio;
@@ -1188,7 +1191,7 @@ $('btn-pdf').addEventListener('click', () => {
         drawX = boxX + (boxW - drawW) / 2;
       }
 
-      doc.addImage(artPhotos[0], 'JPEG', drawX, drawY, drawW, drawH);
+      doc.addImage(certData.photos[0], 'JPEG', drawX, drawY, drawW, drawH);
     } catch (err) {
       console.error("Error al añadir la foto al PDF:", err);
       doc.setFillColor(242, 246, 245);
@@ -1244,12 +1247,12 @@ $('btn-pdf').addEventListener('click', () => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14.5);
   doc.setTextColor(inkR, inkG, inkB);
-  const titulo = $('f-titulo').value || '—';
+  const titulo = certData.titulo || '—';
   const tituloLines = doc.splitTextToSize(titulo, rightW);
   doc.text(tituloLines, midX, y, { align: 'center' });
   y += tituloLines.length * 0.20 + 0.02;
 
-  const epigrafe = $('f-epigrafe').value || '';
+  const epigrafe = certData.epigrafe || '';
   if (epigrafe) {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(10);
@@ -1261,12 +1264,12 @@ $('btn-pdf').addEventListener('click', () => {
 
   // Detalles en Grid (2 Columnas)
   const details = [
-    [t.cert_artist, $('f-artista').value || '—'],
-    [t.cert_year, $('f-anio').value || '—'],
-    [t.cert_technique, $('f-tecnica').value || '—'],
-    [t.cert_dimensions, $('f-dimensiones').value || '—'],
-    [t.cert_category, $('f-categoria').value || '—'],
-    [t.cert_support, $('f-soporte').value || '—'],
+    [t.cert_artist, certData.artista || '—'],
+    [t.cert_year, certData.anio || '—'],
+    [t.cert_technique, certData.tecnica || '—'],
+    [t.cert_dimensions, certData.dimensiones || '—'],
+    [t.cert_category, certData.categoria || '—'],
+    [t.cert_support, certData.soporte || '—'],
   ];
   
   const colX = [rightX, rightX + 1.45];
@@ -1302,13 +1305,13 @@ $('btn-pdf').addEventListener('click', () => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(goldR, goldG, goldB);
-  doc.text(certCode, rightX + rightW, footerY + 0.08, { align: 'right', charSpace: 0.03 });
+  doc.text(certData.code, rightX + rightW, footerY + 0.08, { align: 'right', charSpace: 0.03 });
   
   // --- FILA 2: Ciudad y Fecha ---
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(dimR, dimG, dimB);
-  const place = [$('f-ciudad').value, formatDate($('f-fecha').value)].filter(Boolean).join(' · ');
+  const place = [certData.ciudad, formatDate(certData.fecha)].filter(Boolean).join(' · ');
   doc.text(place, rightX + rightW, footerY + 0.22, { align: 'right' });
 
   // --- FILA 3: Logo a la izquierda y QR a la derecha ---
@@ -1326,17 +1329,25 @@ $('btn-pdf').addEventListener('click', () => {
 
   // QR Code
   try {
-    const qrImg = $('p-qr').querySelector('img');
-    if (qrImg) {
-      // Posicionado en el lado derecho puro, dejando margen seguro
-      doc.addImage(qrImg, 'PNG', rightX + 1.8, row3Y, 0.85, 0.85); 
+    if (typeof QRCode !== 'undefined') {
+      const qrDiv = document.createElement('div');
+      const qrUrl = `${window.location.origin === 'null' ? 'https://rosymer-martinez.art' : window.location.origin + window.location.pathname}?code=${encodeURIComponent(certData.code)}`;
+      new QRCode(qrDiv, { text: qrUrl, width: 150, height: 150, colorDark : "#0b2e2b", colorLight : "#ffffff" });
+      const qrCanvas = qrDiv.querySelector('canvas');
+      if (qrCanvas) {
+        doc.addImage(qrCanvas.toDataURL('image/png'), 'PNG', rightX + 1.8, row3Y, 0.85, 0.85); 
+      }
     }
   } catch (qrErr) {
     console.error("Error QR PDF:", qrErr);
   }
 
-  const safeTitle = (titulo || 'certificado').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const safeTitle = (certData.titulo || 'certificado').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   doc.save(`certificado-${safeTitle || 'obra'}.pdf`);
+}
+
+$('btn-pdf').addEventListener('click', async () => {
+  await generarPDF(getFormData());
 });
 
 // --- DETECTOR DEL MODO COMPRADOR (VISOR PÚBLICO) ---
@@ -1524,6 +1535,27 @@ $('btn-save').addEventListener('click', async () => {
         statusEl.textContent = 'Certificado guardado localmente (Supabase no está conectado).';
       }
       updateSuggestiveLists();
+      
+      // Limpiar Formulario para una nueva obra
+      fields.forEach(f => {
+        if (f !== 'artista' && f !== 'fecha') {
+          const inputEl = $('f-' + f);
+          if (inputEl) inputEl.value = '';
+        }
+      });
+      artPhotos = ['', '', ''];
+      for (let i = 1; i <= 3; i++) {
+        $('img-preview-' + i).style.display = 'none';
+        const slot = $('slot-' + i);
+        if (slot) {
+          slot.querySelector('.photo-preview-box .placeholder-text').style.display = 'inline-block';
+          slot.querySelector('.edit-btn').disabled = true;
+          slot.querySelector('.delete-btn').disabled = true;
+        }
+      }
+      editingId = null;
+      updatePreview();
+      statusEl.textContent = 'Guadado interactivo exitoso. Formulario limpiado.';
     } else {
       statusEl.textContent = 'No se pudo guardar. Intenta de nuevo.';
     }
@@ -1572,10 +1604,15 @@ async function loadGallery() {
         <div class="g-artist">${escapeHtml(data.artista || '—')} · ${escapeHtml(data.anio || '')}</div>
         <div class="g-code">${escapeHtml(data.code || '')}</div>
         <div class="g-actions">
+          <button class="down">Descargar</button>
           <button class="edit">Editar</button>
           <button class="del">Eliminar</button>
         </div>
       `;
+      card.querySelector('.down').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await generarPDF(data);
+      });
       card.querySelector('.edit').addEventListener('click', (e) => {
         e.stopPropagation();
         editingId = data.code;
