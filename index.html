@@ -538,7 +538,7 @@
           <input id="f-epigrafe" type="text" placeholder="Ej. La Mirada que Abrió el Espacio" value="">
 
           <label>Artista</label>
-          <input id="f-artista" type="text" placeholder="Nombre del artista" list="artists-list" value="">
+          <input id="f-artista" type="text" value="ROSYMER MARTINEZ" readonly style="background: rgba(20,60,55,0.05); color: var(--text-dim); border-color: transparent; pointer-events:none;">
 
           <div class="row2">
             <div>
@@ -799,6 +799,21 @@
 
 <script>
 const $ = id => document.getElementById(id);
+
+// Storage Local Fallback para evitar errores
+window.storage = {
+  get: async (key) => ({ value: localStorage.getItem(key) }),
+  set: async (key, val) => { localStorage.setItem(key, val); return true; },
+  delete: async (key) => { localStorage.removeItem(key); return true; },
+  list: async (prefix) => {
+    let keys = [];
+    for(let i=0; i<localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if(!prefix || k.startsWith(prefix)) keys.push(k);
+    }
+    return { keys };
+  }
+};
 
 // --- CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE ---
 let supabase = null;
