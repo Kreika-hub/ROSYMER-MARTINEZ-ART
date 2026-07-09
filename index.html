@@ -513,7 +513,7 @@
         <button class="active" data-view="nuevo">Nuevo</button>
         <button data-view="gallery">Galería</button>
       </div>
-      <button id="btn-settings" type="button" style="background:transparent; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:6px; display:flex; align-items:center; justify-content:center; transition:color .12s;" title="Configuración de Supabase"><i class="fa-solid fa-gear"></i></button>
+      <button id="btn-settings" type="button" style="display:none; background:transparent; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:6px;" title="Configuración de Supabase"><i class="fa-solid fa-gear"></i></button>
     </div>
   </div>
 </div>
@@ -818,28 +818,29 @@ window.storage = {
 
 // --- CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE ---
 let supaClient = null;
-let supUrl = localStorage.getItem('supabase_url') || '';
-let supKey = localStorage.getItem('supabase_anon_key') || '';
 
-function initSupabase() {
-  if (supUrl && supKey) {
-    try {
-      if (typeof window.supabase === 'undefined') {
-        console.warn("Supabase library not loaded. Offline mode active.");
-        supaClient = null;
-        return;
-      }
-      supaClient = window.supabase.createClient(supUrl, supKey);
-      console.log("Supabase inicializado correctamente.");
-    } catch (err) {
-      console.error("Error al inicializar cliente Supabase:", err);
+async function initSupabase() {
+  try {
+    if (typeof window.supabase === 'undefined') {
+      console.warn("Supabase library not loaded. Offline mode active.");
+      supaClient = null;
+      return;
+    }
+    const response = await fetch('/api/config');
+    const config = await response.json();
+    
+    if (config.supabaseUrl && config.supabaseAnonKey) {
+      supaClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      console.log("Supabase conectado mediante Vercel Env.");
+    } else {
+      console.warn("No hay variables de entorno (URL/KEY) configuradas en Vercel para Supabase.");
       supaClient = null;
     }
-  } else {
+  } catch (err) {
+    console.error("Fallo al obtener configuración desde /api/config (¿fuera de Vercel?):", err);
     supaClient = null;
   }
 }
-initSupabase();
 
 // Eventos para el Modal de Configuración Supabase
 function closeSettingsModal() {
@@ -1864,18 +1865,24 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Ejecutar init al cargar
-document.addEventListener('DOMContentLoaded', () => {
-  checkBuyerMode();
+// Ejecutar inicializacion unificada
+let isAppInitialized = false;
+
+async function initializeApp() {
+  if (isAppInitialized) return;
+  isAppInitialized = true;
+  
+  await initSupabase();
+  await checkBuyerMode();
+  
   initPWAInstallation();
   updateSuggestiveLists();
   updatePreview();
-});
+}
+
+document.addEventListener('DOMContentLoaded', initializeApp);
 if (document.readyState === 'interactive' || document.readyState === 'complete') {
-  checkBuyerMode();
-  initPWAInstallation();
-  updateSuggestiveLists();
-  updatePreview();
+  initializeApp();
 }
 </script>
 </body>
