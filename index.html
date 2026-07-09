@@ -1325,13 +1325,11 @@ async function generarPDF(certData) {
   const dateY = baseY;
   
   doc.setFont('helvetica', 'bold');
-  drawSpacedText(certData.code, rightX + rightW, codeY, { fontSize: 11, charSpace: 0.03, align: 'right', maxWidth: rightW, color: [goldR, goldG, goldB] });
+  drawSpacedText(certData.code, rightX + rightW, codeY, { fontSize: 9.5, charSpace: 0.015, align: 'right', maxWidth: rightW - 1.8, color: [goldR, goldG, goldB] });
   
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(dimR, dimG, dimB);
   const place = [certData.ciudad, formatDate(certData.fecha)].filter(Boolean).join(' · ');
-  doc.text(place, rightX + rightW, dateY, { align: 'right' });
+  drawSpacedText(place, rightX + rightW, dateY, { fontSize: 8, align: 'right', maxWidth: rightW - 1.8, color: [dimR, dimG, dimB] });
 
   // --- SECCIÓN IZQUIERDA: Logo (Proporcional) y QR ---
   const decH = 0.48; // Altura pequeña, acorde al pie
