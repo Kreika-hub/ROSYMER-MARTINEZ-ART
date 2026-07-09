@@ -317,34 +317,29 @@
   .cert-details .item .k{ display:block; color:var(--text-dim); font-size:8px; letter-spacing:0.08em; text-transform:uppercase; font-weight:700;}
   .cert-details .item .v{ color:var(--ink); font-weight:700; font-size:11px; margin-top:1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
   
-  .cert-footer{ width:100%; margin-top:8px; padding-top:8px; border-top:1px solid rgba(184,151,90,0.22); display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .cert-footer{ width:100%; margin-top:8px; padding-top:8px; border-top:1px solid rgba(184,151,90,0.22); display:flex; align-items:flex-end; justify-content:space-between; gap:8px;}
+  .cert-footer-left { display: flex; align-items: center; gap: 14px; }
   .cert-qr {
-    width: 48px;
-    height: 48px;
+    width: 38px;
+    height: 38px;
     background: var(--white);
-    padding: 2px;
-    border-radius: 6px;
-    border: 1px solid rgba(20,60,55,0.08);
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
     flex-shrink: 0;
   }
-  .cert-qr img {
+  .cert-qr img, .cert-qr canvas {
     width: 100%;
     height: 100%;
     object-fit: contain;
   }
 
   .seal{
-    width: 50px;
-    height: 30px;
+    height: 32px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     flex-shrink: 0;
-    overflow: hidden;
   }
   .seal img {
     width: 100%;
@@ -689,8 +684,10 @@
                 </div>
                 
                 <div class="cert-footer">
-                  <div class="seal" id="p-seal"><img id="p-seal-img" src="" alt="Logo"></div>
-                  <div class="cert-qr" id="p-qr"></div>
+                  <div class="cert-footer-left">
+                    <div class="seal" id="p-seal"><img id="p-seal-img" src="" alt="Logo"></div>
+                    <div class="cert-qr" id="p-qr"></div>
+                  </div>
                   <div class="cert-meta">
                     <div class="code" id="p-code">—</div>
                     <div class="place" id="p-place">—</div>
