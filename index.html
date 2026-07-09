@@ -1746,44 +1746,52 @@ const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
 function initPWAInstallation() {
   const ua = navigator.userAgent.toLowerCase();
   const isiOS = /iphone|ipad|ipod/.test(ua);
+  const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/.test(ua);
   
   const iconBox = $('pwa-prompt-icon');
   if (iconBox) {
     iconBox.innerHTML = `<img src="./Logo Rosy.png" style="width:100%; height:100%; object-fit:contain;" alt="Logo App">`;
   }
+  
+  const promptEl = $('pwa-install-prompt');
 
-  // Capturar evento de instalación en Android / Chrome
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
+  // Forzamos que siempre aparezca el modal para pantallas móviles si no está instalada la PWA.
+  if (!isStandalone && isMobile && promptEl) {
+    promptEl.style.display = 'block';
     
-    if (!isStandalone) {
-      const promptEl = $('pwa-install-prompt');
-      if (promptEl) {
-        promptEl.style.display = 'block';
-        $('pwa-trigger-area').innerHTML = `
-          <button class="pwa-btn-install" onclick="triggerAndroidInstall()"><i class="fa-solid fa-download"></i> Instalar en dispositivo</button>
-        `;
-      }
-    }
-  });
-
-  // Mostrar mensaje personalizado para celulares iOS (Apple) si no están en Standalone
-  if (isiOS && !isStandalone) {
-    const promptEl = $('pwa-install-prompt');
-    if (promptEl) {
-      promptEl.style.display = 'block';
+    // Fallback nativo: Si el dispositivo es iOS, o si en Android Chrome demora en disparar el evento
+    if (isiOS) {
       $('pwa-trigger-area').innerHTML = `
         <div class="ios-instruction-box">
-          <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-apple"></i> Para descargar en tu iPhone/iPad:</span>
+          <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-apple"></i> Descargar directo en iPhone:</span>
           <ol>
-            <li>Presiona el botón de <strong>Compartir</strong> <i class="fa-solid fa-share-from-square" style="color:var(--aqua-deep);"></i> en el menú de Safari.</li>
-            <li>Selecciona la opción <strong>"Agregar a pantalla de inicio"</strong> <i class="fa-regular fa-square-plus" style="color:var(--aqua-deep);"></i>.</li>
+            <li>Toca el botón <strong>Compartir</strong> <i class="fa-solid fa-share-from-square" style="color:var(--aqua-deep);"></i> en el menú de Safari.</li>
+            <li>Selecciona <strong>"Agregar a inicio"</strong> <i class="fa-regular fa-square-plus" style="color:var(--aqua-deep);"></i>.</li>
           </ol>
+        </div>
+      `;
+    } else {
+      $('pwa-trigger-area').innerHTML = `
+        <div class="ios-instruction-box">
+          <span style="font-weight:700; color:var(--ink);"><i class="fa-brands fa-android"></i> Descargar directo en Android:</span>
+          <p style="margin:4px 0 0;">Usa el menú de 3 puntos de Chrome <i class="fa-solid fa-ellipsis-vertical" style="color:var(--aqua-deep);"></i> y presiona <strong>"Instalar aplicación"</strong>.</p>
         </div>
       `;
     }
   }
+
+  // Capturar evento de instalación nativa PWA en Android (El Botón Verde Directo)
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    if (!isStandalone && promptEl) {
+      promptEl.style.display = 'block'; // Volver a asegurar que se muestre
+      $('pwa-trigger-area').innerHTML = `
+        <button class="pwa-btn-install" onclick="triggerAndroidInstall()"><i class="fa-solid fa-download"></i> Descargar App al Celular</button>
+      `;
+    }
+  });
 }
 
 async function triggerAndroidInstall() {
