@@ -500,8 +500,8 @@
 <div class="navbar">
   <div class="navbar-inner">
     <div>
-      <h1>Certificados</h1>
-      <div class="sub">Kreika · Autenticidad de obras</div>
+      <h1 id="nav-title">Certificados</h1>
+      <div class="sub" id="nav-sub">Kreika · Autenticidad de obras</div>
     </div>
       <div id="lang-switcher" style="display:flex; align-items:center; gap:6px; margin-right:8px; font-weight:600;">
         <button id="btn-lang-es" onclick="setLang('es')" style="background:none; border:none; color:var(--ink); font-size:13px; cursor:pointer;">ES</button>
@@ -509,8 +509,8 @@
         <button id="btn-lang-en" onclick="setLang('en')" style="background:none; border:none; color:var(--ink); font-size:13px; cursor:pointer; opacity:0.5;">EN</button>
       </div>
       <div class="segmented">
-        <button class="active" data-view="nuevo">Nuevo</button>
-        <button data-view="gallery">Galería</button>
+        <button class="active" data-view="nuevo" id="tab-nuevo">Nuevo</button>
+        <button data-view="gallery" id="tab-gallery">Galería</button>
       </div>
       <button id="btn-settings" type="button" style="display:none; background:transparent; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:6px;" title="Configuración de Supabase"><i class="fa-solid fa-gear"></i></button>
     </div>
@@ -522,14 +522,14 @@
 
     <div id="view-nuevo">
       <header class="hero">
-        <div class="eyebrow">Nuevo certificado</div>
-        <h2>Datos de la obra</h2>
-        <p>Completa los campos y descarga el certificado en PDF (7 × 5 in horizontal), o guárdalo en tu galería local.</p>
+        <div class="eyebrow" id="hdr-eyebrow">Nuevo certificado</div>
+        <h2 id="hdr-title">Datos de la obra</h2>
+        <p id="hdr-desc">Completa los campos y descarga el certificado en PDF (7 × 5 in horizontal), o guárdalo en tu galería local.</p>
       </header>
 
       <div class="grid">
         <div class="panel">
-          <h3>Información</h3>
+          <h3 id="panel-info">Información</h3>
 
           <label id="lbl-titulo" class="first">Título de la obra</label>
           <input id="f-titulo" type="text" placeholder="Ej. Karichuana: Mujer del Viento" value="">
@@ -582,12 +582,12 @@
           <datalist id="cities-list"></datalist>
 
           <!-- Fotos del Carrusel -->
-          <label>Fotos de la Obra (Máx. 3)</label>
+          <label id="lbl-fotos">Fotos de la Obra (Máx. 3)</label>
           <div class="photo-uploader-grid">
             <!-- Slot 1 (Principal) -->
             <div class="photo-slot" id="slot-1">
               <div class="photo-preview-box" onclick="triggerUpload(1)">
-                <span class="placeholder-text"><i class="fa-solid fa-image"></i><br>Principal</span>
+                <span class="placeholder-text"><i class="fa-solid fa-image"></i><br><span id="ph-main">Principal</span></span>
                 <img id="img-preview-1" style="display:none;">
               </div>
               <div class="photo-actions">
@@ -632,14 +632,17 @@
 
           <div class="cert-code-box">
             <div>
-              <span class="lbl">Código de Autenticidad</span><br>
-              <span class="code" id="cert-code-display">—</span>
+              <span class="lbl" id="lbl-code">CÓDIGO ÚNICO DE REGISTRO</span><br>
+              <span class="code" id="p-code">—</span>
             </div>
+            <button type="button" onclick="certCode = genCode(); updatePreview();" id="btn-regen"><i class="fa-solid fa-rotate"></i></button>
           </div>
 
-          <button class="btn btn-primary" id="btn-pdf" type="button">⬇ Descargar PDF (5 × 7 in)</button>
-          <button class="btn btn-secondary" id="btn-save" type="button">＋ Guardar en galería</button>
-          <p class="note" id="save-status">El certificado se guarda en tu galería personal, disponible en tu navegador.</p>
+          <button id="btn-save" class="btn btn-primary" style="margin-top:24px;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-save-txt">Guardar en Galería</span>
+          </button>
+          <div id="save-status" style="display:none; font-size:12px; font-weight:600; color:var(--aqua-deep); text-align:center; margin-top:8px;"></div>
+          <div class="note" id="note-txt">La obra se almacenará temporalmente en tu navegador. Tus fotos no se suben al servidor principal.</div>
         </div>
 
         <!-- Previsualización Horizontal del Certificado -->
@@ -824,6 +827,19 @@ try { currentLang = localStorage.getItem('app_lang') || 'en'; } catch(e) {}
 
 const i18n = {
   es: {
+    nav_title: "Certificados",
+    nav_sub: "Kreika · Autenticidad de obras",
+    tab_nuevo: "Nuevo",
+    tab_gallery: "Galería",
+    hdr_eyebrow: "Nuevo certificado",
+    hdr_title: "Datos de la obra",
+    hdr_desc: "Completa los campos y descarga el certificado en PDF (7 × 5 in horizontal), o guárdalo en tu galería local.",
+    panel_info: "Información",
+    lbl_fotos: "Fotos de la Obra (Máx. 3)",
+    ph_main: "Principal",
+    lbl_code: "CÓDIGO ÚNICO DE REGISTRO",
+    btn_save_txt: "Guardar en Galería",
+    note_txt: "La obra e imágenes se resguardan de forma segura en la base de datos distribuida.",
     lbl_title: "Título de la obra",
     lbl_epigraph: "Epígrafe / subtítulo poético",
     lbl_artist: "Artista",
@@ -846,6 +862,19 @@ const i18n = {
     buyer_desc: "Este documento digital confirma el registro y procedencia de la obra de arte original de Rosymer Martínez."
   },
   en: {
+    nav_title: "Certificates",
+    nav_sub: "Kreika · Artwork Authenticity",
+    tab_nuevo: "New",
+    tab_gallery: "Gallery",
+    hdr_eyebrow: "New Certificate",
+    hdr_title: "Artwork Details",
+    hdr_desc: "Fill in the fields and download the PDF certificate (7 × 5 in horizontal), or save it to your local gallery.",
+    panel_info: "Information",
+    lbl_fotos: "Artwork Photos (Max 3)",
+    ph_main: "Main",
+    lbl_code: "UNIQUE REGISTRATION CODE",
+    btn_save_txt: "Save to Gallery",
+    note_txt: "The artwork and images are safely stored in the distributed database.",
     lbl_title: "Title of the work",
     lbl_epigraph: "Epigraph / poetic subtitle",
     lbl_artist: "Artist",
@@ -872,6 +901,20 @@ const i18n = {
 function applyLanguage() {
   const t = i18n[currentLang];
   
+  if ($('nav-title')) $('nav-title').innerText = t.nav_title;
+  if ($('nav-sub')) $('nav-sub').innerText = t.nav_sub;
+  if ($('tab-nuevo')) $('tab-nuevo').innerText = t.tab_nuevo;
+  if ($('tab-gallery')) $('tab-gallery').innerText = t.tab_gallery;
+  if ($('hdr-eyebrow')) $('hdr-eyebrow').innerText = t.hdr_eyebrow;
+  if ($('hdr-title')) $('hdr-title').innerText = t.hdr_title;
+  if ($('hdr-desc')) $('hdr-desc').innerText = t.hdr_desc;
+  if ($('panel-info')) $('panel-info').innerText = t.panel_info;
+  if ($('lbl-fotos')) $('lbl-fotos').innerText = t.lbl_fotos;
+  if ($('ph-main')) $('ph-main').innerText = t.ph_main;
+  if ($('lbl-code')) $('lbl-code').innerText = t.lbl_code;
+  if ($('btn-save-txt')) $('btn-save-txt').innerText = t.btn_save_txt;
+  if ($('note-txt')) $('note-txt').innerText = t.note_txt;
+
   if ($('lbl-titulo')) $('lbl-titulo').innerText = t.lbl_title;
   if ($('lbl-epigrafe')) $('lbl-epigrafe').innerText = t.lbl_epigraph;
   if ($('lbl-artista')) $('lbl-artista').innerText = t.lbl_artist;
@@ -1563,24 +1606,6 @@ $('btn-save').addEventListener('click', async () => {
     await window.storage.set(key, JSON.stringify(data), false); // Respaldo local
 
     editingId = certCode;
-      updateSuggestiveLists();
-      
-      // Limpiar Formulario para una nueva obra
-      fields.forEach(f => {
-        if (f !== 'artista' && f !== 'fecha') {
-          const inputEl = $('f-' + f);
-          if (inputEl) inputEl.value = '';
-        }
-      });
-      artPhotos = ['', '', ''];
-      for (let i = 1; i <= 3; i++) {
-        $('img-preview-' + i).style.display = 'none';
-        const slot = $('slot-' + i);
-        if (slot) {
-          slot.querySelector('.photo-preview-box .placeholder-text').style.display = 'inline-block';
-          slot.querySelector('.edit-btn').disabled = true;
-          slot.querySelector('.delete-btn').disabled = true;
-        }
     updateSuggestiveLists();
     
     // Limpiar Formulario para una nueva obra
@@ -1600,6 +1625,7 @@ $('btn-save').addEventListener('click', async () => {
         slot.querySelector('.delete-btn').disabled = true;
       }
     }
+
     editingId = null;
     updatePreview();
     statusEl.textContent = 'Guardado exitoso en la nube.';
