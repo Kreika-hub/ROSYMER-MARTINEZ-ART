@@ -1874,7 +1874,7 @@ function openCropModal(imageSrc) {
     cropperInstance.destroy();
   }
   
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
       if (typeof Cropper === 'undefined') {
         await showAlert(
