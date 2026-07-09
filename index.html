@@ -1154,6 +1154,12 @@ async function generarPDF(certData) {
   const dimR = 108, dimG = 137, dimB = 133;
   const W = 7, H = 5;
 
+  // Limites exactos imprimibles (borde dorado interior)
+  const printableTop = 0.30;
+  const printableBottom = H - 0.30;
+  const printableLeft = 0.30;
+  const printableRight = W - 0.30;
+
   // Fondo
   doc.setFillColor(paperR, paperG, paperB);
   doc.rect(0, 0, W, H, 'F');
@@ -1166,8 +1172,10 @@ async function generarPDF(certData) {
   doc.rect(0.30, 0.30, W - 0.60, H - 0.60);
 
   // --- COLUMNA IZQUIERDA: Foto de la obra ---
-  const boxW = 3.1, boxH = 4.2;
-  const boxX = 0.4, boxY = 0.4;
+  const boxW = 3.1;
+  const boxX = printableLeft + 0.1;
+  const boxY = printableTop + 0.1;
+  const boxH = printableBottom - boxY - 0.1;
 
   if (certData.photos && certData.photos[0]) {
     try {
@@ -1301,32 +1309,39 @@ async function generarPDF(certData) {
     doc.text(valLines, x, rowY + 0.14);
   });
 
-  const footerY = H - 1.15; // Elevado para dar espacio a todas las filas
-  
+  // --- PIE DE PÁGINA (Calculado de abajo hacia arriba) ---
+  const bottomPadding = 0.08;
+  const row3Height = 0.85;
+
+  const row3Y = printableBottom - bottomPadding - row3Height;
+  const row2Y = row3Y - 0.14;
+  const row1Y = row2Y - 0.18;
+  const dividerY = row1Y - 0.12;
+
   // Línea divisoria del pie
   doc.setDrawColor(goldR, goldG, goldB);
   doc.setLineWidth(0.006);
-  doc.line(rightX, footerY - 0.10, rightX + rightW, footerY - 0.10);
+  doc.line(rightX, dividerY, rightX + rightW, dividerY);
 
   // --- FILA 1: Código de Autenticidad ---
   doc.setFont('helvetica', 'bold');
-  drawSpacedText(certData.code, rightX + rightW, footerY + 0.08, { fontSize: 11, charSpace: 0.03, align: 'right', maxWidth: rightW, color: [goldR, goldG, goldB] });
+  drawSpacedText(certData.code, rightX + rightW, row1Y, { fontSize: 11, charSpace: 0.03, align: 'right', maxWidth: rightW, color: [goldR, goldG, goldB] });
   
   // --- FILA 2: Ciudad y Fecha ---
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(dimR, dimG, dimB);
   const place = [certData.ciudad, formatDate(certData.fecha)].filter(Boolean).join(' · ');
-  doc.text(place, rightX + rightW, footerY + 0.22, { align: 'right' });
+  doc.text(place, rightX + rightW, row2Y, { align: 'right' });
 
   // --- FILA 3: Logo a la izquierda y QR a la derecha ---
-  const row3Y = footerY + 0.40;
-  
   // Logo
   const logoImg = $('corporate-logo-img');
   if (logoImg && logoImg.naturalWidth) {
     try {
-      doc.addImage(logoImg, 'PNG', rightX + 0.1, row3Y + 0.2, 0.8, 0.4);
+      const logoHeight = 0.4;
+      const logoY = row3Y + (row3Height - logoHeight) / 2;
+      doc.addImage(logoImg, 'PNG', rightX + 0.1, logoY, 0.8, logoHeight);
     } catch (logoErr) {
       console.error("Error al incrustar logotipo en PDF:", logoErr);
     }
@@ -1340,7 +1355,7 @@ async function generarPDF(certData) {
       new QRCode(qrDiv, { text: qrUrl, width: 150, height: 150, colorDark : "#0b2e2b", colorLight : "#ffffff" });
       const qrCanvas = qrDiv.querySelector('canvas');
       if (qrCanvas) {
-        doc.addImage(qrCanvas.toDataURL('image/png'), 'PNG', rightX + 1.8, row3Y, 0.85, 0.85); 
+        doc.addImage(qrCanvas.toDataURL('image/png'), 'PNG', rightX + 1.8, row3Y, row3Height, row3Height); 
       }
     }
   } catch (qrErr) {
