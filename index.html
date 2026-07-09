@@ -819,7 +819,7 @@ window.storage = {
 
 // --- GLOBAL STATE ---
 let isBuyerView = false;
-let currentLang = localStorage.getItem('app_lang') || 'es';
+let currentLang = localStorage.getItem('app_lang') || 'en';
 
 const i18n = {
   es: {
@@ -1516,46 +1516,48 @@ document.querySelectorAll('.segmented button').forEach(btn => {
 
 $('btn-save').addEventListener('click', async () => {
   const data = getFormData();
-  const key = 'cert:' + (editingId || certCode);
   const statusEl = $('save-status');
-  statusEl.textContent = 'Guardando en galería local...';
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Guardando certificado en la nube...';
+  
+  if (!supaClient) {
+    statusEl.textContent = 'Error: Supabase no está conectado.';
+    alert('Sin conexión a la base de datos principal. Verifica tu red.');
+    return;
+  }
+  
   try {
-    const result = await window.storage.set(key, JSON.stringify(data), false);
-    if (result) {
-      editingId = certCode;
+    const payload = {
+      code: certCode,
+      titulo: data.titulo,
+      epigrafe: data.epigrafe,
+      artista: data.artista,
+      anio: parseInt(data.anio) || null,
+      tecnica: data.tecnica,
+      dimensiones: data.dimensiones,
+      categoria: data.categoria,
+      soporte: data.soporte,
+      ciudad: data.ciudad,
+      fecha: data.fecha || null,
+      photo_1: data.photos[0] || null,
+      photo_2: data.photos[1] || null,
+      photo_3: data.photos[2] || null
+    };
+    
+    const { error } = await supaClient
+      .from('certificates')
+      .upsert(payload, { onConflict: 'code' });
       
-      if (supaClient) {
-        statusEl.textContent = 'Sincronizando con Supabase...';
-        const payload = {
-          code: certCode,
-          titulo: data.titulo,
-          epigrafe: data.epigrafe,
-          artista: data.artista,
-          anio: parseInt(data.anio) || null,
-          tecnica: data.tecnica,
-          dimensiones: data.dimensiones,
-          categoria: data.categoria,
-          soporte: data.soporte,
-          ciudad: data.ciudad,
-          fecha: data.fecha || null,
-          photo_1: data.photos[0] || null,
-          photo_2: data.photos[1] || null,
-          photo_3: data.photos[2] || null
-        };
-        
-        const { error } = await supaClient
-          .from('certificates')
-          .upsert(payload, { onConflict: 'code' });
-          
-        if (error) {
-          console.error("Error al persistir en Supabase:", error);
-          statusEl.textContent = 'Guardado localmente. Error al sincronizar con Supabase: ' + error.message;
-        } else {
-          statusEl.textContent = 'Certificado guardado localmente e integrado con la nube de Supabase.';
-        }
-      } else {
-        statusEl.textContent = 'Certificado guardado localmente (Supabase no está conectado).';
-      }
+    if (error) {
+      console.error("Error al persistir en Supabase:", error);
+      statusEl.textContent = 'Error al sincronizar con la nube: ' + error.message;
+      return;
+    }
+    
+    const key = 'cert:' + (editingId || certCode);
+    await window.storage.set(key, JSON.stringify(data), false); // Respaldo local
+
+    editingId = certCode;
       updateSuggestiveLists();
       
       // Limpiar Formulario para una nueva obra
@@ -1574,13 +1576,28 @@ $('btn-save').addEventListener('click', async () => {
           slot.querySelector('.edit-btn').disabled = true;
           slot.querySelector('.delete-btn').disabled = true;
         }
+    updateSuggestiveLists();
+    
+    // Limpiar Formulario para una nueva obra
+    fields.forEach(f => {
+      if (f !== 'artista' && f !== 'fecha') {
+        const inputEl = $('f-' + f);
+        if (inputEl) inputEl.value = '';
       }
-      editingId = null;
-      updatePreview();
-      statusEl.textContent = 'Guadado interactivo exitoso. Formulario limpiado.';
-    } else {
-      statusEl.textContent = 'No se pudo guardar. Intenta de nuevo.';
+    });
+    artPhotos = ['', '', ''];
+    for (let i = 1; i <= 3; i++) {
+      $('img-preview-' + i).style.display = 'none';
+      const slot = $('slot-' + i);
+      if (slot) {
+        slot.querySelector('.photo-preview-box .placeholder-text').style.display = 'inline-block';
+        slot.querySelector('.edit-btn').disabled = true;
+        slot.querySelector('.delete-btn').disabled = true;
+      }
     }
+    editingId = null;
+    updatePreview();
+    statusEl.textContent = 'Guardado exitoso en la nube.';
   } catch(e) {
     console.error('Error guardando certificado:', e);
     statusEl.textContent = 'No se pudo guardar. Intenta de nuevo.';
@@ -1589,48 +1606,66 @@ $('btn-save').addEventListener('click', async () => {
 
 async function loadGallery() {
   const container = $('gallery-container');
-  container.innerHTML = '<div class="gallery-empty"><div class="icon">⏳</div>Cargando galería...</div>';
+  container.innerHTML = '<div class="gallery-empty"><div class="icon">⏳</div>Cargando galería desde la nube...</div>';
+  
+  if (!supaClient) {
+    container.innerHTML = '<div class="gallery-empty"><div class="icon">🔌</div>Sin conexión a la base de datos.<br>Verifica que la app esté inicializada correctamente.</div>';
+    return;
+  }
+
   try {
-    const list = await window.storage.list('cert:', false);
-    const keys = (list && list.keys) ? list.keys : [];
-    if (keys.length === 0) {
-      container.innerHTML = '<div class="gallery-empty"><div class="icon">🖼</div>Aún no has guardado certificados.<br>Crea uno y haz clic en "Guardar en galería".</div>';
+    const { data: dbItems, error } = await supaClient
+      .from('certificates')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    
+    if (!dbItems || dbItems.length === 0) {
+      container.innerHTML = '<div class="gallery-empty"><div class="icon">🖼</div>Aún no hay certificados guardados en la base de datos.</div>';
       return;
     }
-    const items = [];
-    for (const key of keys) {
-      try {
-        const res = await window.storage.get(key, false);
-        if (res && res.value) {
-          items.push({ key, data: JSON.parse(res.value) });
-        }
-      } catch(e) { /* Ignorar */ }
-    }
-    if (items.length === 0) {
-      container.innerHTML = '<div class="gallery-empty"><div class="icon">🖼</div>Aún no has guardado certificados.</div>';
-      return;
-    }
+    
     container.innerHTML = '<div class="gallery-grid"></div>';
     const grid = container.querySelector('.gallery-grid');
-    items.forEach(({key, data}) => {
+    
+    dbItems.forEach((row) => {
+      const data = {
+        code: row.code,
+        titulo: row.titulo,
+        epigrafe: row.epigrafe,
+        artista: row.artista,
+        anio: row.anio,
+        tecnica: row.tecnica,
+        dimensiones: row.dimensiones,
+        categoria: row.categoria,
+        soporte: row.soporte,
+        ciudad: row.ciudad,
+        fecha: row.fecha,
+        photos: [row.photo_1, row.photo_2, row.photo_3]
+      };
+      
       const card = document.createElement('div');
       card.className = 'gallery-card';
-      const thumbnailStyle = data.photos && data.photos[0] 
-        ? `background-image: url(${data.photos[0]}); background-size: cover; background-position: center;` 
+      const fallbackPhoto = data.photos[0] || data.photos[1] || data.photos[2];
+      const thumbnailStyle = fallbackPhoto 
+        ? `background-image: url(${fallbackPhoto}); background-size: cover; background-position: center;` 
         : `background: rgba(20,60,55,0.04); display:flex; align-items:center; justify-content:center;`;
-      const thumbContent = data.photos && data.photos[0] ? '' : '<i class="fa-regular fa-image" style="color:var(--text-dim); font-size:22px;"></i>';
+      const thumbContent = fallbackPhoto ? '' : '<i class="fa-regular fa-image" style="color:var(--text-dim); font-size:22px;"></i>';
 
       card.innerHTML = `
         <div class="g-thumb" style="${thumbnailStyle} width:100%; height:110px; border-radius:12px; margin-bottom:12px; overflow:hidden; border: 1px solid rgba(20,60,55,0.08);">${thumbContent}</div>
-        <div class="g-title">${escapeHtml(data.titulo || 'Sin título')}</div>
+        <div class="g-title">${escapeHtml(data.titulo || (currentLang === 'es'?'Sin título':'Untitled'))}</div>
         <div class="g-artist">${escapeHtml(data.artista || '—')} · ${escapeHtml(data.anio || '')}</div>
         <div class="g-code">${escapeHtml(data.code || '')}</div>
         <div class="g-actions">
-          <button class="down">Descargar</button>
-          <button class="edit">Editar</button>
-          <button class="del">Eliminar</button>
+          <button class="down">PDF</button>
+          <button class="edit">${currentLang === 'es'?'Editar':'Edit'}</button>
+          <button class="del">${currentLang === 'es'?'Eliminar':'Delete'}</button>
         </div>
       `;
+      grid.appendChild(card);
+      
       card.querySelector('.down').addEventListener('click', async (e) => {
         e.stopPropagation();
         await generarPDF(data);
@@ -1643,26 +1678,25 @@ async function loadGallery() {
       });
       card.querySelector('.del').addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (confirm('¿Seguro que deseas eliminar este certificado?')) {
+        if (confirm(currentLang === 'es' ? '¿Seguro que deseas eliminar este certificado permanentemente de la base de datos?' : 'Are you sure you want to permanently delete this certificate from the database?')) {
           try {
-            await window.storage.delete(key, false);
-            if (supaClient) {
-              const { error } = await supaClient
-                .from('certificates')
-                .delete()
-                .eq('code', data.code);
-              if (error) console.error("Error al eliminar de Supabase:", error);
+            const { error: delError } = await supaClient.from('certificates').delete().eq('code', data.code);
+            if (delError) {
+              console.error(delError);
+              alert('Error procesando eliminación en la nube.');
+            } else {
+              window.storage.delete('cert:' + data.code, false); // Limpiar cache basurilla
+              loadGallery();
             }
-            loadGallery();
-            updateSuggestiveLists();
-          } catch(err) { console.error('Error eliminando:', err); }
+          } catch (err) {
+            console.error(err);
+          }
         }
       });
-      grid.appendChild(card);
     });
-  } catch(e) {
-    console.error('Error cargando galería:', e);
-    container.innerHTML = '<div class="gallery-empty"><div class="icon">⚠️</div>No se pudo cargar la galería.</div>';
+  } catch (err) {
+    console.error('Error cargando galería desde Supabase:', err);
+    container.innerHTML = `<div class="gallery-empty"><div class="icon">❌</div>Error cargando galería: ${err.message}</div>`;
   }
 }
 
