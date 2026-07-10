@@ -243,7 +243,7 @@
     position:absolute; inset:0; background:linear-gradient(165deg, #FFFFFF 0%, var(--gold-light) 120%);
     border:1px solid rgba(255,255,255,1); border-radius:20px;
     box-shadow:0 24px 60px var(--shadow-strong), inset 0 1px 0 rgba(255,255,255,1);
-    padding:16px; display:flex; flex-direction:row; gap:12px; overflow:hidden;
+    padding:24px 16px 16px; display:flex; flex-direction:row; gap:12px; overflow:hidden;
   }
   .cert-card::before{ content:''; position:absolute; inset:10px; border:2px double var(--gold); border-radius:11px; pointer-events:none; z-index: 5;}
   
@@ -742,7 +742,7 @@
                     <div class="cert-qr" id="p-qr"></div>
                   </div>
                   <div class="cert-meta">
-                    <div class="code" id="p-code" id="cert-code-display">—</div>
+                    <div class="code" id="p-code">—</div>
                     <div class="place" id="p-place">—</div>
                   </div>
                 </div>
@@ -1069,7 +1069,7 @@ function saveSettings() {
   supKey = keyVal;
   initSupabase();
   
-  alert("Credenciales de Supabase actualizadas satisfactoriamente.");
+  showAlert(currentLang === 'es' ? 'Credenciales de Supabase actualizadas.' : 'Supabase credentials updated.', '✅', 'OK');
   closeSettingsModal();
 }
 
@@ -1660,7 +1660,17 @@ document.querySelectorAll('.segmented button').forEach(btn => {
 const btnPdf = $('btn-pdf');
 if (btnPdf) {
   btnPdf.addEventListener('click', async () => {
-    await generarPDF(getFormData());
+    try {
+      console.log('Generando PDF...');
+      await generarPDF(getFormData());
+      console.log('PDF generado exitosamente.');
+    } catch (err) {
+      console.error('Error generando PDF:', err);
+      await showAlert(
+        (currentLang === 'es' ? 'Error al generar PDF: ' : 'Error generating PDF: ') + err.message,
+        '❌', 'Error'
+      );
+    }
   });
 }
 
@@ -1674,7 +1684,7 @@ if (btnSave) {
     
     if (!supaClient) {
       statusEl.textContent = 'Error: Supabase no está conectado.';
-      alert('Sin conexión a la base de datos principal. Verifica tu red.');
+      showAlert(currentLang === 'es' ? 'Sin conexión a la base de datos.' : 'No database connection.', '🔌', 'Error');
       return;
     }
   
