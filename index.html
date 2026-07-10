@@ -250,14 +250,14 @@
   .cert-photo-col { width:38%; flex:0 0 38%; height:100%; padding:10px; display:flex; }
   .cert-image-container {
     flex:1; border-radius:11px; overflow:hidden; position:relative; z-index:2;
-    background: linear-gradient(160deg, #2f6b3a 0%, #16324a 55%, #5a1f4a 100%);
+    background: rgba(20,60,55,0.04);
   }
   .cert-image-container .image-placeholder {
     width:100%; height:100%; display:flex; flex-direction:column;
     align-items:center; justify-content:center; padding:10px;
-    color:rgba(255,255,255,0.60); font-size:10px; font-weight:600; text-align:center;
+    color:var(--text-dim); font-size:10px; font-weight:600; text-align:center;
   }
-  .cert-image-container .image-placeholder i { font-size:20px; margin-bottom:5px; color:rgba(255,255,255,0.60); }
+  .cert-image-container .image-placeholder i { font-size:20px; margin-bottom:5px; color:var(--aqua-deep); opacity:0.6; }
   .carousel-item { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; display:none; }
   .carousel-item.active { display:block; }
 
@@ -301,23 +301,24 @@
     overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
   }
 
-  .cert-details { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; flex-shrink:0; margin-bottom:auto; }
+  .cert-details { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:10px 8px; flex-shrink:0; margin-bottom:auto; }
   .cert-details .item { text-align:left; }
-  .cert-details .item .k { display:block; color:#1a8f83; font-size:7px; letter-spacing:0.10em; text-transform:uppercase; font-weight:700; margin-bottom:1px; }
-  .cert-details .item .v { color:#17221f; font-weight:700; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cert-details .item .k { display:block; color:#1a8f83; font-size:8px; letter-spacing:0.10em; text-transform:uppercase; font-weight:700; margin-bottom:2px; }
+  .cert-details .item .v { color:#17221f; font-weight:700; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .cert-footer { width:100%; margin-top:6px; flex-shrink:0; }
-  .cert-footer .cert-place { text-align:center; font-size:7px; color:#6d726e; border-top:1px solid #e3cf9e; padding-top:5px; margin-bottom:5px; }
+  .cert-footer .cert-place { text-align:center; font-size:8px; color:#6d726e; border-bottom:1px solid #e3cf9e; padding-bottom:5px; margin-bottom:6px; }
   .cert-footer .footer-row { display:flex; align-items:center; justify-content:space-between; gap:6px; }
 
-  .seal { width:32px; height:32px; border-radius:50%; border:1.5px solid #1a8f83; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
-  .seal img { width:100%; height:100%; object-fit:contain; }
-  .cert-qr { width:32px; height:32px; background:var(--white); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .seal { height:34px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .seal img { height:100%; width:auto; object-fit:contain; }
+  .cert-qr { width:34px; height:34px; background:var(--white); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .cert-qr img, .cert-qr canvas { width:100%; height:100%; object-fit:contain; }
 
-  .qr-code-group { display:flex; align-items:center; gap:6px; }
-  .cert-meta { text-align:right; flex-shrink:0; }
-  .cert-meta .code { font-size:8px; letter-spacing:0.05em; color:#17221f; font-weight:800; display:block; }
+  .qr-code-group { display:flex; align-items:center; gap:8px; }
+  .cert-meta { text-align:left; flex-shrink:0; }
+  .cert-meta .code { font-size:10px; letter-spacing:0.03em; color:#17221f; font-weight:800; display:block; }
+  .cert-meta .cert-fecha { font-size:8px; color:#6d726e; font-weight:600; margin-top:1px; }
   .size-hint{ margin-top:14px; font-size:11.5px; color:var(--text-dim); text-align:center; font-weight:500;}
 
   /* Galería */
@@ -603,7 +604,7 @@
           <div class="cert-code-box">
             <div>
               <span class="lbl" id="lbl-code">CÓDIGO ÚNICO DE REGISTRO</span><br>
-              <span class="code" id="p-code">—</span>
+              <span class="code" id="cert-code-display">—</span>
             </div>
             <button type="button" onclick="certCode = genCode(); updatePreview();" id="btn-regen"><i class="fa-solid fa-rotate"></i></button>
           </div>
@@ -662,12 +663,13 @@
                 <div class="cert-footer">
                   <div class="cert-place" id="p-place">—</div>
                   <div class="footer-row">
-                    <div class="seal" id="p-seal"><img id="p-seal-img" src="" alt="Logo"></div>
                     <div class="qr-code-group">
+                      <div id="p-seal"><img id="p-seal-img" src="" alt="Logo"></div>
                       <div class="cert-qr" id="p-qr"></div>
-                      <div class="cert-meta">
-                        <div class="code" id="p-code">—</div>
-                      </div>
+                    </div>
+                    <div class="cert-meta">
+                      <div class="code" id="p-code">—</div>
+                      <div class="cert-fecha" id="p-fecha-preview"></div>
                     </div>
                   </div>
                 </div>
@@ -1159,7 +1161,8 @@ function updatePreview() {
   
   const city = $('f-ciudad').value.trim() || '';
   const dateVal = $('f-fecha').value || '';
-  $('p-place').textContent = [city, formatDate(dateVal)].filter(Boolean).join(' · ') || '—';
+  $('p-place').textContent = city || '—';
+  if ($('p-fecha-preview')) $('p-fecha-preview').textContent = formatDate(dateVal) || '';
 
   // Mostrar el logo en la vista digital
   const sealContainer = $('p-seal');
