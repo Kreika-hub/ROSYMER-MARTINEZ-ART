@@ -310,8 +310,8 @@
   .cert-footer .cert-place { text-align:center; font-size:8px; color:#6d726e; border-bottom:1px solid #e3cf9e; padding-bottom:5px; margin-bottom:6px; }
   .cert-footer .footer-row { display:flex; align-items:center; justify-content:space-between; gap:6px; }
 
-  .seal { height:34px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .seal img { height:100%; width:auto; object-fit:contain; }
+  .seal { width:40px; height:40px; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+  .seal img { width:100%; height:100%; object-fit:contain; }
   .cert-qr { width:34px; height:34px; background:var(--white); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .cert-qr img, .cert-qr canvas { width:100%; height:100%; object-fit:contain; }
 
@@ -664,7 +664,7 @@
                   <div class="cert-place" id="p-place">—</div>
                   <div class="footer-row">
                     <div class="qr-code-group">
-                      <div id="p-seal"><img id="p-seal-img" src="" alt="Logo"></div>
+                      <div class="seal" id="p-seal"><img id="p-seal-img" src="" alt="Logo"></div>
                       <div class="cert-qr" id="p-qr"></div>
                     </div>
                     <div class="cert-meta">
