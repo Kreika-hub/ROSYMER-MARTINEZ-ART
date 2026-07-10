@@ -238,9 +238,12 @@
 
   /* --- SECCIÓN PREVISUALIZACIÓN HORIZONTAL (7×5 in) --- */
   .preview-col{ display:flex; flex-direction:column; align-items:center; width: 100%; }
-  .preview-shell{ width:100%; aspect-ratio:7/5; position:relative; }
+  .preview-shell{ width:100%; aspect-ratio:7/5; position:relative; overflow:hidden; }
   .cert-card{
-    position:absolute; inset:0; background:#ffffff;
+    position:absolute; top:0; left:0;
+    width:600px; height:428px;
+    transform-origin: top left;
+    background:#ffffff;
     border-radius:18px; border:2px solid #1a8f83;
     display:flex; flex-direction:row; overflow:hidden;
     box-shadow:0 4px 24px rgba(0,0,0,0.09);
@@ -296,9 +299,9 @@
     font-size:13px; flex-shrink:0;
   }
   .cert-epigraph {
-    text-align:center; font-style:italic; color:#565b57; font-size:7px;
-    line-height:1.35; margin-bottom:5px; word-break:break-word; flex-shrink:1;
-    overflow:hidden; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical;
+    text-align:center; font-style:italic; color:#565b57; font-size:8px;
+    line-height:1.4; margin-bottom:7px; word-break:break-word; flex-shrink:0;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
   }
 
   .cert-details { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:10px 8px; flex-shrink:0; margin-bottom:auto; }
@@ -1220,30 +1223,34 @@ async function generarPDF(certData) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'in', format:[7,5], orientation:'landscape' });
 
-  // --- Paleta de colores nuevo diseño ---
-  const inkR = 23,  inkG = 34,  inkB = 31;          // #17221f oscuro
-  const tealR = 26, tealG = 143, tealB = 131;        // #1a8f83 teal
-  const goldR = 201, goldG = 162, goldB = 74;        // #c9a24a dorado separador
-  const grayR = 109, grayG = 114, grayB = 110;       // #6d726e gris tenue
+  const inkR = 11, inkG = 46, inkB = 43;
+  const goldR = 184, goldG = 151, goldB = 90;
   const paperR = 255, paperG = 255, paperB = 255;
+  const dimR = 108, dimG = 137, dimB = 133;
   const W = 7, H = 5;
 
-  // --- FONDO BLANCO ---
+  // Limites exactos imprimibles (borde dorado interior)
+  const printableTop = 0.30;
+  const printableBottom = H - 0.30;
+  const printableLeft = 0.30;
+  const printableRight = W - 0.30;
+
+  // Fondo
   doc.setFillColor(paperR, paperG, paperB);
   doc.rect(0, 0, W, H, 'F');
 
-  // --- BORDE TEAL REDONDEADO ---
-  doc.setDrawColor(tealR, tealG, tealB);
-  doc.setLineWidth(0.022);
-  doc.roundedRect(0.14, 0.14, W - 0.28, H - 0.28, 0.14, 0.14);
+  // Bordes del Certificado (Doble línea dorada clásica)
+  doc.setDrawColor(goldR, goldG, goldB);
+  doc.setLineWidth(0.018);
+  doc.rect(0.22, 0.22, W - 0.44, H - 0.44);
+  doc.setLineWidth(0.008);
+  doc.rect(0.30, 0.30, W - 0.60, H - 0.60);
 
-  // --- COLUMNA IZQUIERDA: Foto de la obra (38% del ancho) ---
-  const photoColW = W * 0.38;
-  const photoPad  = 0.14;
-  const boxX = photoPad;
-  const boxY = photoPad;
-  const boxW = photoColW - photoPad * 2;
-  const boxH = H - photoPad * 2;
+  // --- COLUMNA IZQUIERDA: Foto de la obra ---
+  const boxW = 3.1;
+  const boxX = printableLeft + 0.1;
+  const boxY = printableTop + 0.1;
+  const boxH = printableBottom - boxY - 0.1;
 
   if (certData.photos && certData.photos[0]) {
     try {
@@ -1254,14 +1261,19 @@ async function generarPDF(certData) {
       let imgH = imgObj.height || 1000;
       let imgRatio = imgW / imgH;
       const boxRatio = boxW / boxH;
+
       let drawW = boxW, drawH = boxH, drawX = boxX, drawY = boxY;
+
       if (imgRatio > boxRatio) {
-        drawW = boxW; drawH = boxW / imgRatio;
+        drawW = boxW;
+        drawH = boxW / imgRatio;
         drawY = boxY + (boxH - drawH) / 2;
       } else {
-        drawH = boxH; drawW = boxH * imgRatio;
+        drawH = boxH;
+        drawW = boxH * imgRatio;
         drawX = boxX + (boxW - drawW) / 2;
       }
+
       doc.addImage(certData.photos[0], 'JPEG', drawX, drawY, drawW, drawH);
     } catch (err) {
       console.error("Error al añadir la foto al PDF:", err);
@@ -1271,181 +1283,164 @@ async function generarPDF(certData) {
   } else {
     doc.setFillColor(242, 246, 245);
     doc.rect(boxX, boxY, boxW, boxH, 'F');
+    doc.setDrawColor(dimR, dimG, dimB);
+    doc.setLineWidth(0.005);
+    doc.rect(boxX, boxY, boxW, boxH);
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(9.5);
-    doc.setTextColor(grayR, grayG, grayB);
-    doc.text('Foto de la Obra', boxX + boxW / 2, boxY + boxH / 2, { align: 'center' });
+    doc.setTextColor(dimR, dimG, dimB);
+    doc.text('Foto de la Obra', boxX + boxW/2, boxY + boxH/2, { align: 'center' });
   }
 
-  // --- SEPARADOR VERTICAL DORADO ---
-  const sepX = photoColW + 0.02;
-  doc.setDrawColor(goldR, goldG, goldB);
-  doc.setLineWidth(0.012);
-  doc.line(sepX, 0.22, sepX, H - 0.22);
-
-  // --- COLUMNA DERECHA ---
-  const rightX   = sepX + 0.16;
-  const rightEnd = W - 0.18;
-  const rightW   = rightEnd - rightX;
-  const midX     = rightX + rightW / 2;
+  // --- COLUMNA DERECHA: Metadatos y Estilo ---
+  const rightX = 3.8, rightW = 2.8;
+  const midX = rightX + rightW/2;
+  
+  let y = 0.70;
+  
+  // Helper para textos espaciados con auto-shrink seguro sin bug de desbordamiento (jsPDF align+charSpace fixes)
   const t = i18n[currentLang];
 
   function drawSpacedText(text, drawX, drawY, options) {
     let { fontSize, charSpace = 0, align = 'left', maxWidth = null, color = null } = options;
     if (color) doc.setTextColor.apply(doc, color);
     doc.setFontSize(fontSize);
+    
+    // Calcula el ancho real físico del string
     let width = doc.getTextWidth(text) + (charSpace * (text.length - 1));
-    while (maxWidth && width > maxWidth && fontSize > 5) {
+    
+    // Reduce la fuente de forma responsiva hasta que quepa perfectamente
+    while (maxWidth && width > maxWidth && fontSize > 6) {
       fontSize -= 0.5;
       doc.setFontSize(fontSize);
       width = doc.getTextWidth(text) + (charSpace * (text.length - 1));
     }
+    
     let xOffset = drawX;
-    if (align === 'right')  xOffset = drawX - width;
+    if (align === 'right') xOffset = drawX - width;
     if (align === 'center') xOffset = drawX - width / 2;
+    
+    // Al pasarlo manualmente alineado a la izq (default), ya no delego el cálculo asimétrico a jsPDF
     doc.text(text, xOffset, drawY, { charSpace });
   }
 
-  // -- Header --
-  let y = 0.52;
   doc.setFont('helvetica', 'bold');
-  drawSpacedText((t.cert_cert_of || 'CERTIFICATE OF').toUpperCase(), midX, y, {
-    fontSize: 8, charSpace: 0.07, align: 'center', maxWidth: rightW - 0.1,
-    color: [goldR, goldG, goldB]
-  });
-  y += 0.20;
-  drawSpacedText((t.cert_auth || 'AUTHENTICITY').toUpperCase(), midX, y, {
-    fontSize: 18, charSpace: 0.06, align: 'center', maxWidth: rightW - 0.1,
-    color: [inkR, inkG, inkB]
-  });
-  y += 0.19;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(grayR, grayG, grayB);
-  doc.text('By Rosymer Martinez Art', midX, y, { align: 'center' });
+  drawSpacedText(t.cert_cert_of, midX, y, { fontSize: 10.5, charSpace: 0.06, align: 'center', maxWidth: rightW - 0.2, color: [goldR, goldG, goldB] });
+  
+  y += 0.22;
+  drawSpacedText(t.cert_auth, midX, y, { fontSize: 17, charSpace: 0.08, align: 'center', maxWidth: rightW - 0.2, color: [inkR, inkG, inkB] });
 
-  // -- Banner teal con título de la obra --
-  y += 0.17;
-  const bannerH = 0.31;
-  doc.setFillColor(tealR, tealG, tealB);
-  doc.roundedRect(rightX, y, rightW, bannerH, 0.04, 0.04, 'F');
-  const titulo = (certData.titulo || '—').toUpperCase();
+  y += 0.08;
+  doc.setDrawColor(goldR, goldG, goldB);
+  doc.setLineWidth(0.018);
+  doc.line(midX - 0.5, y, midX + 0.5, y);
+  
+  y += 0.28;
   doc.setFont('helvetica', 'bold');
-  let tSize = 13.5;
-  doc.setFontSize(tSize);
-  while (doc.getTextWidth(titulo) > rightW - 0.12 && tSize > 7) {
-    tSize -= 0.5; doc.setFontSize(tSize);
-  }
-  doc.setTextColor(255, 255, 255);
-  doc.text(titulo, midX, y + bannerH / 2 + 0.048, { align: 'center' });
+  doc.setFontSize(14.5);
+  doc.setTextColor(inkR, inkG, inkB);
+  const titulo = certData.titulo || '—';
+  const tituloLines = doc.splitTextToSize(titulo, rightW);
+  doc.text(tituloLines, midX, y, { align: 'center' });
+  y += tituloLines.length * 0.20 + 0.02;
 
-  // -- Epígrafe --
-  y += bannerH + 0.15;
   const epigrafe = certData.epigrafe || '';
   if (epigrafe) {
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8.5);
-    doc.setTextColor(86, 91, 87);
-    const epiLines = doc.splitTextToSize(`"${epigrafe}"`, rightW - 0.05);
-    const showLines = epiLines.slice(0, 3);
-    doc.text(showLines, midX, y, { align: 'center' });
-    y += showLines.length * 0.148 + 0.08;
-  } else {
-    y += 0.12;
+    doc.setFontSize(10);
+    doc.setTextColor(goldR, goldG, goldB);
+    const epiLines = doc.splitTextToSize(epigrafe, rightW);
+    doc.text(epiLines, midX, y, { align: 'center' });
+    y += epiLines.length * 0.16;
   }
 
-  // -- Grid de detalles (2 columnas, labels teal) --
+  // Detalles en Grid (2 Columnas)
   const details = [
-    [t.cert_artist,      certData.artista     || '—'],
-    [t.cert_year,        certData.anio        || '—'],
-    [t.cert_technique,   certData.tecnica     || '—'],
-    [t.cert_dimensions,  certData.dimensiones || '—'],
-    [t.cert_category,    certData.categoria   || '—'],
-    [t.cert_support,     certData.soporte     || '—'],
+    [t.cert_artist, certData.artista || '—'],
+    [t.cert_year, certData.anio || '—'],
+    [t.cert_technique, certData.tecnica || '—'],
+    [t.cert_dimensions, certData.dimensiones || '—'],
+    [t.cert_category, certData.categoria || '—'],
+    [t.cert_support, certData.soporte || '—'],
   ];
-  const col1X   = rightX + 0.02;
-  const col2X   = rightX + rightW / 2 + 0.06;
-  const colMaxW = rightW / 2 - 0.12;
-  const rowH    = 0.42;
-
+  
+  const colX = [rightX, rightX + 1.45];
+  const colW = 1.35;
+  const gridStartY = 1.95;
+  
   details.forEach((d, i) => {
-    const col  = i % 2;
-    const row  = Math.floor(i / 2);
-    const x    = col === 0 ? col1X : col2X;
-    const rowY = y + row * rowH;
-    doc.setFont('helvetica', 'bold');
-    drawSpacedText((d[0] || '').toUpperCase(), x, rowY, {
-      fontSize: 7.5, charSpace: 0.04, align: 'left', color: [tealR, tealG, tealB]
-    });
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = colX[col];
+    const rowY = gridStartY + row * 0.55;
+    
+    doc.setFont('helvetica', 'normal');
+    drawSpacedText(d[0], x, rowY, { fontSize: 8.5, charSpace: 0.04, align: 'left', color: [dimR, dimG, dimB] });
+    
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(inkR, inkG, inkB);
-    const valLines = doc.splitTextToSize(d[1], colMaxW);
-    doc.text(valLines.slice(0, 2), x, rowY + 0.15);
+    const valLines = doc.splitTextToSize(d[1], colW);
+    doc.text(valLines, x, rowY + 0.14);
   });
 
-  // --- PIE DE PÁGINA ---
-  const footerBaseY = H - 0.20;
-  const dividerY    = footerBaseY - 0.50;
-
-  // Ciudad centrada ENCIMA de la línea dorada
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(grayR, grayG, grayB);
-  if (certData.ciudad) {
-    doc.text(`${certData.ciudad}.`, midX, dividerY - 0.08, { align: 'center' });
-  }
-
-  // Línea dorada divisoria
+  // --- PIE DE PÁGINA (Alineación Paralela) ---
+  const bottomMargin = 0.15; 
+  const footerH = 0.55; 
+  const baseY = printableBottom - bottomMargin;
+  const dividerY = baseY - footerH - 0.12;
+  
+  // Línea divisoria del pie
   doc.setDrawColor(goldR, goldG, goldB);
-  doc.setLineWidth(0.007);
-  doc.line(rightX, dividerY, rightEnd, dividerY);
+  doc.setLineWidth(0.006);
+  doc.line(rightX, dividerY, rightX + rightW, dividerY);
 
-  // Logo + QR (izquierda del pie)
-  const logoQrY = dividerY + 0.07;
-  const itemH   = 0.40;
-  let logoActualW = itemH;
+  // --- SECIÓN DERECHA: Código y Fecha ---
+  const codeY = baseY - 0.22;
+  const dateY = baseY;
+  
+  doc.setFont('helvetica', 'bold');
+  drawSpacedText(certData.code, rightX + rightW, codeY, { fontSize: 9.5, charSpace: 0.015, align: 'right', maxWidth: rightW - 1.8, color: [goldR, goldG, goldB] });
+  
+  doc.setFont('helvetica', 'normal');
+  const place = [certData.ciudad, formatDate(certData.fecha)].filter(Boolean).join(' · ');
+  drawSpacedText(place, rightX + rightW, dateY, { fontSize: 8, align: 'right', maxWidth: rightW - 1.8, color: [dimR, dimG, dimB] });
 
+  // --- SECCIÓN IZQUIERDA: Logo (Proporcional) y QR ---
+  const decH = 0.48; // Altura pequeña, acorde al pie
+  const decY = baseY - decH + 0.05; 
+  const logoX = rightX;
+  const qrX = rightX + 1.25;
+
+  // Logo proporcional
   const logoImg = $('corporate-logo-img');
   if (logoImg && logoImg.naturalWidth && logoImg.naturalHeight) {
     try {
       const ratio = logoImg.naturalWidth / logoImg.naturalHeight;
-      logoActualW = itemH * ratio;
-      doc.addImage(logoImg, 'PNG', rightX, logoQrY, logoActualW, itemH);
+      const logoW = decH * ratio; // Mantiene su relación de aspecto real sin aplastarse
+      doc.addImage(logoImg, 'PNG', logoX, decY, logoW, decH);
     } catch (logoErr) {
       console.error("Error al incrustar logotipo en PDF:", logoErr);
     }
   }
 
-  const qrX = rightX + logoActualW + 0.06;
+  // QR Code
   try {
     if (typeof QRCode !== 'undefined') {
       const qrDiv = document.createElement('div');
       const qrUrl = `${window.location.origin === 'null' ? 'https://rosymer-martinez.art' : window.location.origin + window.location.pathname}?code=${encodeURIComponent(certData.code)}`;
-      new QRCode(qrDiv, { text: qrUrl, width: 200, height: 200, colorDark: "#0b2e2b", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+      // Generamos el canvas un poco más grande en pixeles para mejor scan, pero se escala a `decH` en pulgadas
+      new QRCode(qrDiv, { text: qrUrl, width: 200, height: 200, colorDark : "#0b2e2b", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+      
+      // jsPDF soporta usar el Canvas directamente, previniendo bugs visuales de exportación a URL
       const qrCanvas = qrDiv.querySelector('canvas');
       if (qrCanvas) {
-        doc.addImage(qrCanvas, 'PNG', qrX, logoQrY, itemH, itemH);
+        doc.addImage(qrCanvas, 'PNG', qrX, decY, decH, decH); 
       }
     }
   } catch (qrErr) {
     console.error("Error QR PDF:", qrErr);
   }
-
-  // Código y fecha (derecha del pie)
-  const codeY  = logoQrY + 0.18;
-  const fechaY = codeY + 0.17;
-  doc.setFont('helvetica', 'bold');
-  drawSpacedText(certData.code || '', rightEnd, codeY, {
-    fontSize: 9.5, charSpace: 0.01, align: 'right',
-    maxWidth: rightW - logoActualW - itemH - 0.22, color: [inkR, inkG, inkB]
-  });
-  const place = [certData.ciudad, formatDate(certData.fecha)].filter(Boolean).join(', ');
-  doc.setFont('helvetica', 'normal');
-  drawSpacedText(place, rightEnd, fechaY, {
-    fontSize: 7.5, align: 'right',
-    maxWidth: rightW - logoActualW - itemH - 0.22, color: [grayR, grayG, grayB]
-  });
 
   const safeTitle = (certData.titulo || 'certificado').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   doc.save(`certificado-${safeTitle || 'obra'}.pdf`);
@@ -2219,6 +2214,18 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 if (document.readyState === 'interactive' || document.readyState === 'complete') {
   initializeApp();
 }
+
+/* ─── Escala responsiva del certificado de vista previa ─── */
+function scaleCertPreview() {
+  const shell = document.querySelector('.preview-shell');
+  const card  = document.querySelector('.cert-card');
+  if (!shell || !card) return;
+  const w = shell.offsetWidth;
+  if (w === 0) return;
+  card.style.transform = 'scale(' + (w / 600).toFixed(4) + ')';
+}
+window.addEventListener('resize', scaleCertPreview);
+document.addEventListener('DOMContentLoaded', function() { setTimeout(scaleCertPreview, 120); });
 </script>
 </body>
 </html>
